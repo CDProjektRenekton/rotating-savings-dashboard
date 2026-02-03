@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savings Dashboard 2026 - PHP (Thousands)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        :root {
+            --primary: #00529B;
+            --primary-dark: #003B6F;
+            --secondary: #FFD700;
+            --success: #228B22;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Login Page Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .login-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo i {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+
+        .login-logo h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-logo p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 82, 155, 0.1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 82, 155, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            display: none;
+            text-align: left;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .error-message i {
+            margin-right: 8px;
+        }
+
+        /* Dashboard Styles (Hidden by default) */
+        .dashboard-container {
+            display: none;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 2rem 0;
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 50%;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .logo p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .currency-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .currency-indicator i {
+            margin-right: 5px;
+        }
+
+        .total-savings-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            min-width: 250px;
+            text-align: center;
+        }
+
+        .total-savings-card h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .total-amount {
+            font-size: 2.2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Auto-refresh indicator */
+        .auto-refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .auto-refresh-indicator .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Data Source Selector */
+        .data-source-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .data-source-btn {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-source-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .data-source-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Refresh Controls */
+        .refresh-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Main Content */
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .card-header i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(0, 82, 155, 0.05);
+        }
+
+        .total-row {
+            background-color: rgba(0, 82, 155, 0.08);
+            font-weight: 700;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Embed Container */
+        .embed-container {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 992px) {
+            .embed-container {
+                grid-column: span 1;
+            }
+        }
+
+        .iframe-container {
+            height: 500px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid var(--light-gray);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .summary-icon {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .summary-content h3 {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .summary-content .value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        /* Currency Format Note */
+        .currency-note {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--gray);
+            border-top: 1px solid var(--light-gray);
+            margin-top: 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            font-size: 1.2rem;
+            color: var(--gray);
+        }
+
+        .loading i {
+            margin-right: 10px;
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert */
+        .alert {
+            background-color: rgba(0, 82, 155, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 20px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 0.75rem;
+            }
+            
+            .alert {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .refresh-controls {
+                justify-content: center;
+            }
+            
+            .login-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fas fa-coins"></i>
+                <h1>HR RSA Savings Dashboard</h1>
+                <p>Secure Access Required</p>
+                </div>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="form-control" 
+                        placeholder="Enter username"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-control" 
+                        placeholder="Enter password"
+                        required
+                    >
+                </div>
+                
+                <div id="login-error" class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="error-text">Invalid username or password</span>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+                </button>
+                
+          
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard (Hidden until login) -->
+    <div id="dashboard" class="dashboard-container">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-coins"></i>
+                        <div>
+                            <h1>HR RSA Savings Dashboard 2026</h1>
+                            <p>Track your contributions</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center;">
+                        <div class="total-savings-card">
+                            <h3>Total Savings (2026)</h3>
+                            <div class="total-amount">
+                                <span id="total-savings">₱0</span>
+                            </div>
+                            <div class="auto-refresh-indicator">
+                                <span class="dot"></span>
+                                <span>Auto-refresh: <span id="refresh-countdown">5:00</span></span>
+                            </div>
+                        </div>
+                        
+                        <button id="logout-btn" class="logout-btn" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="alert">
+                <div class="alert-content">
+                    <p><i class="fas fa-sync-alt"></i> <strong>Auto-refresh:</strong> Data updates every 5 minutes. Last updated: <span id="last-updated-time">Never</span></p>
+                </div>
+                <div class="refresh-controls">
+                    <div class="last-updated">
+                        <i class="fas fa-clock"></i> Next refresh: <span id="next-refresh-time">5:00</span>
+                    </div>
+                    <button id="manual-refresh-btn" class="refresh-btn">
+                        <i class="fas fa-redo"></i> Refresh Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="data-source-selector">
+                <button id="load-data-btn" class="data-source-btn active">
+                    <i class="fas fa-sync-alt"></i> Load Data from Sheets
+                </button>
+                <button id="show-iframe-btn" class="data-source-btn">
+                    <i class="fab fa-google"></i> Show Google Sheets
+                </button>
+                <button id="show-charts-btn" class="data-source-btn">
+                    <i class="fas fa-chart-bar"></i> Show Charts & Table
+                </button>
+            </div>
+
+            <!-- Summary Cards (Monthly Average Removed) -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h3>Total Members</h3>
+                        <div class="value" id="total-members">0</div>
+                    </div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h3>Current Month</h3>
+                        <div class="value" id="current-month">January</div>
+                    </div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h3>Top Saver</h3>
+                        <div class="value" id="top-saver">-</div>
+                        <div class="currency-note">Highest total savings</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts View -->
+            <div id="charts-view">
+                <div class="dashboard-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Monthly Savings Trend</h2>
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                        <div class="currency-note" style="text-align: center; margin-top: 10px;">
+                            Values in thousands (₱1,000)
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Member Contributions</h2>
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="contributionsChart"></canvas>
+                        </div>
+                        <div class="currency-note" style="text-align: center; margin-top: 10px;">
+                            Based on total savings in thousands
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Detailed Savings Table</h2>
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div class="table-container">
+                            <div class="loading" id="table-loading">
+                                <i class="fas fa-spinner"></i> Loading data from Google Sheets...
+                            </div>
+                            <table id="savings-table">
+                                <!-- Table will be populated by JavaScript -->
+                            </table>
+                        </div>
+                        <div class="currency-note" style="text-align: center; margin-top: 10px;">
+                            All values displayed in thousands (₱1,000 format)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Sheets Iframe View -->
+            <div id="iframe-view" class="card embed-container" style="display: none;">
+                <div class="card-header">
+                    <h2>Google Sheets Data</h2>
+                    <i class="fab fa-google"></i>
+                </div>
+                <div class="iframe-container">
+                    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQCB3v4YuYMzzboHrQbqmnk7MpMj6x5Mq_2LPI56mT7uAdiQAWNeWGz3p_L7yGvT0NtM6TRjg-KDPdk/pubhtml?widget=true&amp;headers=false"></iframe>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="container">
+                <p>HR RSA Savings Dashboard 2026 - Philippine Peso (Thousands) &copy; All rights reserved</p>
+                <div class="footer-links">
+                    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQCB3v4YuYMzzboHrQbqmnk7MpMj6x5Mq_2LPI56mT7uAdiQAWNeWGz3p_L7yGvT0NtM6TRjg-KDPdk/pubhtml" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open Google Sheet
+                    </a>
+                    <a href="https://github.com" target="_blank">
+                        <i class="fab fa-github"></i> View on GitHub
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Login credentials
+        const VALID_USERNAME = "hrrsa-admin";
+        const VALID_PASSWORD = "2026savings!";
+        
+        // Google Sheets configuration
+        const SHEET_ID = '2PACX-1vQCB3v4YuYMzzboHrQbqmnk7MpMj6x5Mq_2LPI56mT7uAdiQAWNeWGz3p_L7yGvT0NtM6TRjg-KDPdk';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv`;
+        
+        // Months for the year
+        const MONTHS = ["January", "February", "March", "April", "May", "June", 
+                       "July", "August", "September", "October", "November", "December"];
+        
+        // Current month for display
+        const CURRENT_MONTH_INDEX = new Date().getMonth();
+        const CURRENT_MONTH = MONTHS[Math.min(CURRENT_MONTH_INDEX, 11)]; // Cap at December for 2026
+        
+        // Chart instances
+        let monthlyChart = null;
+        let contributionsChart = null;
+        
+        // Auto-refresh variables
+        let refreshCountdown = 300; // 5 minutes in seconds
+        let lastUpdateTime = null;
+        
+        // Format currency in Philippine Peso (in thousands)
+        function formatCurrencyThousands(amount) {
+            // Convert to thousands (divide by 1000)
+            const amountInThousands = amount / 1000;
+            
+            // Format as Philippine Peso with appropriate decimal places
+            return `₱${amountInThousands.toLocaleString('en-PH', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            })}k`;
+        }
+        
+        // Format currency for charts (no 'k' suffix)
+        function formatCurrencyChart(amount) {
+            const amountInThousands = amount / 1000;
+            return `₱${amountInThousands.toLocaleString('en-PH', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            })}`;
+        }
+        
+        // Format number with comma separators for table (in thousands)
+        function formatNumberThousands(number) {
+            // For table display, show raw values (already in 1000.00 format from Excel)
+            return parseFloat(number).toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        // Update countdown timer
+        function updateCountdown() {
+            refreshCountdown--;
+            
+            if (refreshCountdown <= 0) {
+                // Time to refresh
+                refreshCountdown = 300; // Reset to 5 minutes
+                loadDataFromSheets();
+            }
+            
+            // Update display
+            const minutes = Math.floor(refreshCountdown / 60);
+            const seconds = refreshCountdown % 60;
+            const countdownStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('refresh-countdown').textContent = countdownStr;
+            document.getElementById('next-refresh-time').textContent = countdownStr;
+        }
+        
+        // Update last updated time
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            lastUpdateTime = now;
+            
+            const timeStr = now.toLocaleTimeString('en-PH', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            document.getElementById('last-updated-time').textContent = timeStr;
+        }
+        
+        // Parse CSV value properly
+        function parseCSVValue(value) {
+            if (!value || value === '') return 0;
+            
+            // Remove any currency symbols or commas
+            let cleanValue = value.toString().replace(/[₱$,]/g, '').trim();
+            
+            // Parse as float
+            const parsed = parseFloat(cleanValue);
+            
+            // Return 0 if not a valid number
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        
+        // Login function
+        function login(username, password) {
+            if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+                // Successful login
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('login-error').classList.remove('show');
+                
+                // Load dashboard data
+                document.getElementById('current-month').textContent = CURRENT_MONTH;
+                loadDataFromSheets();
+                
+                // Start countdown timer
+                setInterval(updateCountdown, 1000);
+                
+                return true;
+            } else {
+                // Failed login
+                document.getElementById('login-error').classList.add('show');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('username').focus();
+                return false;
+            }
+        }
+        
+        // Logout function
+        function logout() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('username').focus();
+        }
+        
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up login form
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                login(username, password);
+            });
+            
+            // Set up logout button
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            
+            // Set up dashboard button event listeners
+            document.getElementById('load-data-btn').addEventListener('click', loadDataFromSheets);
+            document.getElementById('show-iframe-btn').addEventListener('click', showIframeView);
+            document.getElementById('show-charts-btn').addEventListener('click', showChartsView);
+            document.getElementById('manual-refresh-btn').addEventListener('click', function() {
+                refreshCountdown = 300; // Reset countdown
+                loadDataFromSheets();
+            });
+            
+            // Focus on username field initially
+            document.getElementById('username').focus();
+        });
+        
+        // Function to load data from Google Sheets CSV
+        function loadDataFromSheets() {
+            // Show loading state
+            document.getElementById('table-loading').style.display = 'flex';
+            document.getElementById('savings-table').innerHTML = '';
+            
+            // Reset buttons
+            setActiveButton('load-data-btn');
+            showChartsView();
+            
+            // Fetch CSV data from Google Sheets
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    console.log('CSV Data loaded:', results.data);
+                    processSheetData(results.data);
+                    updateLastUpdatedTime();
+                },
+                error: function(error) {
+                    console.error('Error loading Google Sheets data:', error);
+                    document.getElementById('table-loading').innerHTML = 
+                        '<i class="fas fa-exclamation-triangle"></i> Error loading data from Google Sheets. Using sample data instead.';
+                    
+                    // Fallback to sample data if actual sheet can't be loaded
+                    setTimeout(() => {
+                        useSampleData();
+                        updateLastUpdatedTime();
+                    }, 1000);
+                }
+            });
+        }
+        
+        // Process the Google Sheets data
+        function processSheetData(data) {
+            console.log('Processing sheet data:', data);
+            
+            // Parse the data into a structured format
+            const members = [];
+            let monthlyTotals = new Array(12).fill(0);
+            
+            // Process each row (member)
+            data.forEach(row => {
+                console.log('Processing row:', row);
+                
+                // Extract member name
+                const name = row['Name'] || row['name'] || row['NAME'] || Object.values(row)[0] || 'Unknown';
+                
+                // Extract monthly savings
+                const months = [];
+                let total = 0;
+                
+                MONTHS.forEach((month, index) => {
+                    // Try different possible column names
+                    const monthValue = row[month] || row[month.toUpperCase()] || row[month.toLowerCase()] || 0;
+                    const value = parseCSVValue(monthValue);
+                    months.push(value);
+                    monthlyTotals[index] += value;
+                    total += value;
+                });
+                
+                // Extract total if available
+                const totalFromSheet = parseCSVValue(row['Total Savings'] || row['Total'] || row['TOTAL'] || row['Total Savings '] || 0);
+                
+                members.push({
+                    name: name,
+                    months: months,
+                    total: totalFromSheet || total
+                });
+                
+                console.log('Added member:', name, 'months:', months, 'total:', totalFromSheet || total);
+            });
+            
+            console.log('Monthly totals:', monthlyTotals);
+            
+            // Update dashboard with parsed data
+            updateDashboard(members, monthlyTotals);
+        }
+        
+        // Fallback to sample data (in Philippine Peso thousands)
+        function useSampleData() {
+            console.log('Using sample data in Philippine Peso thousands');
+            
+            // Sample data in ₱ thousands (1000.00 format from Excel)
+            const sampleMembers = [
+                { name: "Maria Santos", months: [1250.50, 1350.75, 1450.25, 1550.00, 1650.50, 1750.75, 1850.25, 1950.00, 2050.50, 2150.75, 2250.25, 2350.00], total: 20655.50 },
+                { name: "Juan Dela Cruz", months: [1150.25, 1250.50, 1350.75, 1450.25, 1550.00, 1650.50, 1750.75, 1850.25, 1950.00, 2050.50, 2150.75, 2250.25], total: 19355.75 },
+                { name: "Ana Reyes", months: [1550.00, 1650.50, 1750.75, 1850.25, 1950.00, 2050.50, 2150.75, 2250.25, 2350.00, 2450.50, 2550.75, 2650.25], total: 24755.25 },
+                { name: "Pedro Bautista", months: [950.75, 1050.25, 1150.50, 1250.75, 1350.25, 1450.50, 1550.75, 1650.25, 1750.50, 1850.75, 1950.25, 2050.50], total: 16555.00 },
+                { name: "Sofia Lim", months: [2050.25, 2150.50, 2250.75, 2350.25, 2450.50, 2550.75, 2650.25, 2750.50, 2850.75, 2950.25, 3050.50, 3150.75], total: 30755.25 }
+            ];
+            
+            const monthlyTotals = MONTHS.map((month, index) => {
+                return sampleMembers.reduce((sum, member) => sum + member.months[index], 0);
+            });
+            
+            updateDashboard(sampleMembers, monthlyTotals);
+        }
+        
+        // Update the dashboard with data
+        function updateDashboard(members, monthlyTotals) {
+            console.log('Updating dashboard with members:', members.length, 'monthly totals:', monthlyTotals);
+            
+            // Calculate totals
+            const totalSavings = members.reduce((sum, member) => sum + member.total, 0);
+            
+            // Find top saver
+            const topSaver = members.reduce((prev, current) => 
+                (prev.total > current.total) ? prev : current
+            );
+            
+            // Update summary cards with Philippine Peso formatting (in thousands)
+            document.getElementById('total-savings').textContent = formatCurrencyThousands(totalSavings);
+            document.getElementById('total-members').textContent = members.length;
+            document.getElementById('top-saver').textContent = topSaver.name;
+            
+            // Create/update charts
+            createMonthlyChart(monthlyTotals);
+            createContributionsChart(members);
+            
+            // Create table
+            createSavingsTable(members, monthlyTotals);
+            
+            // Hide loading state
+            document.getElementById('table-loading').style.display = 'none';
+            
+            console.log('Dashboard update complete. Total savings:', totalSavings);
+        }
+        
+        // Create monthly savings chart
+        function createMonthlyChart(monthlyTotals) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
+            
+            monthlyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: MONTHS,
+                    datasets: [{
+                        label: 'Monthly Savings (₱ thousands)',
+                        data: monthlyTotals,
+                        backgroundColor: 'rgba(0, 82, 155, 0.1)',
+                        borderColor: 'rgba(0, 82, 155, 1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return formatCurrencyChart(context.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyChart(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create member contributions chart
+        function createContributionsChart(members) {
+            const ctx = document.getElementById('contributionsChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (contributionsChart) {
+                contributionsChart.destroy();
+            }
+            
+            // Prepare data for pie chart
+            const memberNames = members.map(member => member.name);
+            const memberTotals = members.map(member => member.total);
+            
+            // Generate colors for each member
+            const backgroundColors = generateColors(members.length);
+            
+            contributionsChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: memberNames,
+                    datasets: [{
+                        data: memberTotals,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: 'white'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${context.label}: ${formatCurrencyChart(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create savings table (showing 1000.00 format directly)
+        function createSavingsTable(members, monthlyTotals) {
+            const table = document.getElementById('savings-table');
+            
+            // Create table header
+            let html = `
+                <thead>
+                    <tr>
+                        <th>Name</th>
+            `;
+            
+            // Add month columns
+            MONTHS.forEach(month => {
+                html += `<th>${month}</th>`;
+            });
+            
+            html += `
+                        <th>Total Savings</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            // Add member rows
+            members.forEach(member => {
+                html += `<tr>`;
+                html += `<td class="member-name">${member.name}</td>`;
+                
+                // Add monthly amounts (show 1000.00 format directly)
+                member.months.forEach(amount => {
+                    html += `<td class="amount-cell">${formatNumberThousands(amount)}</td>`;
+                });
+                
+                // Add total (show 1000.00 format directly)
+                html += `<td class="amount-cell total-cell">${formatNumberThousands(member.total)}</td>`;
+                html += `</tr>`;
+            });
+            
+            // Add totals row
+            html += `<tr class="total-row">`;
+            html += `<td><strong>Monthly Totals</strong></td>`;
+            
+            monthlyTotals.forEach(total => {
+                html += `<td class="amount-cell"><strong>${formatNumberThousands(total)}</strong></td>`;
+            });
+            
+            const grandTotal = monthlyTotals.reduce((sum, total) => sum + total, 0);
+            html += `<td class="amount-cell total-cell"><strong>${formatNumberThousands(grandTotal)}</strong></td>`;
+            html += `</tr>`;
+            
+            html += `</tbody>`;
+            
+            table.innerHTML = html;
+        }
+        
+        // Generate colors for charts
+        function generateColors(count) {
+            const colors = [];
+            const baseHue = 210; // Blue base hue for Philippine theme
+            
+            for (let i = 0; i < count; i++) {
+                const hue = (baseHue + (i * 360 / count)) % 360;
+                colors.push(`hsl(${hue}, 70%, 60%)`);
+            }
+            
+            return colors;
+        }
+        
+        // Show iframe view
+        function showIframeView() {
+            setActiveButton('show-iframe-btn');
+            document.getElementById('charts-view').style.display = 'none';
+            document.getElementById('iframe-view').style.display = 'block';
+        }
+        
+        // Show charts view
+        function showChartsView() {
+            setActiveButton('show-charts-btn');
+            document.getElementById('iframe-view').style.display = 'none';
+            document.getElementById('charts-view').style.display = 'block';
+        }
+        
+        // Set active button
+        function setActiveButton(activeId) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.data-source-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            document.getElementById(activeId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
