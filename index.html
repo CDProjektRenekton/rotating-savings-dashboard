@@ -3,1435 +3,2536 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savings Dashboard 2026 - PHP (Thousands)</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>HR RSA Savings Dashboard 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script>
+        // Apply the saved theme before first paint so the page doesn't flash.
+        try {
+            var savedTheme = localStorage.getItem('rsa-theme');
+            if (savedTheme === 'dark' || savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        } catch (e) { /* storage unavailable */ }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
+        /* =====================================================================
+           Design tokens (light theme by default, dark theme below)
+           ===================================================================== */
         :root {
-            --primary: #00529B;
-            --primary-dark: #003B6F;
-            --secondary: #FFD700;
-            --success: #228B22;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
-            --border-radius: 12px;
-            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            color-scheme: light;
+            --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+            --page: #f3f5f9;
+            --surface: #ffffff;
+            --surface-2: #f6f8fb;
+            --border: rgba(15, 23, 42, 0.10);
+            --border-strong: rgba(15, 23, 42, 0.18);
+            --text: #0f172a;
+            --text-2: #475569;
+            --muted: #64748b;
+            --grid: #e8ebf0;
+            --axis: #cbd2dc;
+            --row-hover: #f8fafc;
+
+            --brand: #00529B;
+            --brand-strong: #003B6F;
+            --brand-ink: #00529B;
+            --brand-soft: rgba(0, 82, 155, 0.08);
+            --topbar-from: #00529B;
+            --topbar-to: #003B6F;
+            --gold: #FFD700;
+            --gold-soft: #fff4c2;
+            --gold-ink: #7a5b00;
+            --gold-ring: #e0b400;
+
+            --focus: #2a78d6;
+            --focus-ring: rgba(42, 120, 214, 0.25);
+
+            /* Chart colours (validated: series vs surface >= 3:1) */
+            --series-1: #2a78d6;
+            --series-wash: rgba(42, 120, 214, 0.10);
+            --track: #dbe8f8;
+            --context: #7b8698;
+
+            /* Status colours: always paired with an icon + label */
+            --good: #0ca30c;
+            --good-bg: #e3f5e3;
+            --warning: #fab219;
+            --warning-icon: #c98500;
+            --warning-bg: #fff3d6;
+            --critical: #d03b3b;
+            --critical-bg: #fbe4e4;
+            --neutral-bg: #eef1f5;
+
+            --tooltip-bg: #0f172a;
+            --tooltip-text: #f8fafc;
+            --tooltip-muted: #cbd5e1;
+
+            --radius: 14px;
+            --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 6px 20px rgba(15, 23, 42, 0.06);
         }
 
-        body {
-            background-color: #f5f7fb;
-            color: var(--dark);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Login Page Styles - FIXED */
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            padding: 20px;
-        }
-
-        .login-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 2.5rem;
-            box-shadow: var(--box-shadow);
-            width: 100%;
-            max-width: 420px;
-            text-align: center;
-        }
-
-        .login-logo {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .login-logo i {
-            font-size: 2.8rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 15px;
-            border-radius: 50%;
-            margin-bottom: 0.8rem;
-        }
-
-        .login-logo h1 {
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-bottom: 0.3rem;
-            line-height: 1.3;
-        }
-
-        .login-logo p {
-            color: var(--gray);
-            font-size: 0.85rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.2rem;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.4rem;
-            font-weight: 600;
-            color: var(--dark);
-            font-size: 0.9rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--light-gray);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 82, 155, 0.1);
-        }
-
-        .login-btn {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            padding: 0.9rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            width: 100%;
-            margin-top: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 82, 155, 0.3);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-            padding: 0.7rem;
-            border-radius: 6px;
-            margin-top: 1rem;
-            display: none;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        .error-message.show {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Dashboard Styles (Hidden by default) */
-        .dashboard-container {
-            display: none;
-        }
-
-        /* Header Styles - IMPROVED */
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 1.5rem 0;
-            border-bottom-left-radius: var(--border-radius);
-            border-bottom-right-radius: var(--border-radius);
-            margin-bottom: 2rem;
-            box-shadow: var(--box-shadow);
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .logo i {
-            font-size: 2rem;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .logo-text h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        .logo-text p {
-            opacity: 0.9;
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
-
-        .currency-indicator {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(255, 215, 0, 0.2);
-            color: #FFD700;
-            padding: 0.25rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-
-        .currency-indicator i {
-            margin-right: 4px;
-            font-size: 0.8rem;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .total-savings-card {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 1.2rem;
-            border-radius: var(--border-radius);
-            backdrop-filter: blur(10px);
-            min-width: 220px;
-            text-align: center;
-        }
-
-        .total-savings-card h3 {
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-            font-weight: 500;
-            opacity: 0.9;
-        }
-
-        .total-amount {
-            font-size: 1.8rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        /* Auto-refresh indicator */
-        .auto-refresh-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            opacity: 0.9;
-        }
-
-        .auto-refresh-indicator .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: #4CAF50;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Data Source Selector - IMPROVED */
-        .data-source-selector {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin: 1.5rem 0;
-            flex-wrap: wrap;
-        }
-
-        .data-source-btn {
-            background: white;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            padding: 0.7rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-
-        .data-source-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .data-source-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Refresh Controls */
-        .refresh-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 1rem;
-        }
-
-        .refresh-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .last-updated {
-            font-size: 0.9rem;
-            color: var(--gray);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .refresh-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .refresh-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        /* Main Content - IMPROVED */
-        .dashboard-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 25px;
-            margin-bottom: 3rem;
-        }
-
-        @media (max-width: 1100px) {
-            .dashboard-content {
-                grid-template-columns: 1fr;
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                color-scheme: dark;
+                --page: #0b0f15;
+                --surface: #141a22;
+                --surface-2: #1b232d;
+                --border: rgba(255, 255, 255, 0.08);
+                --border-strong: rgba(255, 255, 255, 0.16);
+                --text: #e7ecf2;
+                --text-2: #b3bdca;
+                --muted: #8b97a7;
+                --grid: #232c37;
+                --axis: #364150;
+                --row-hover: #18202a;
+                --brand: #0a5fb0;
+                --brand-strong: #00468a;
+                --brand-ink: #6cb0f5;
+                --brand-soft: rgba(108, 176, 245, 0.12);
+                --topbar-from: #0b3a6b;
+                --topbar-to: #072746;
+                --gold-soft: rgba(255, 215, 0, 0.14);
+                --gold-ink: #ffd966;
+                --gold-ring: #c9a400;
+                --series-1: #3987e5;
+                --series-wash: rgba(57, 135, 229, 0.16);
+                --track: #1d3352;
+                --context: #7f8a9b;
+                --good-bg: rgba(12, 163, 12, 0.18);
+                --warning-icon: #fab219;
+                --warning-bg: rgba(250, 178, 25, 0.16);
+                --critical-bg: rgba(208, 59, 59, 0.22);
+                --neutral-bg: rgba(255, 255, 255, 0.06);
+                --tooltip-bg: #e7ecf2;
+                --tooltip-text: #0f172a;
+                --tooltip-muted: #475569;
+                --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
             }
         }
 
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --page: #0b0f15;
+            --surface: #141a22;
+            --surface-2: #1b232d;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --text: #e7ecf2;
+            --text-2: #b3bdca;
+            --muted: #8b97a7;
+            --grid: #232c37;
+            --axis: #364150;
+            --row-hover: #18202a;
+            --brand: #0a5fb0;
+            --brand-strong: #00468a;
+            --brand-ink: #6cb0f5;
+            --brand-soft: rgba(108, 176, 245, 0.12);
+            --topbar-from: #0b3a6b;
+            --topbar-to: #072746;
+            --gold-soft: rgba(255, 215, 0, 0.14);
+            --gold-ink: #ffd966;
+            --gold-ring: #c9a400;
+            --series-1: #3987e5;
+            --series-wash: rgba(57, 135, 229, 0.16);
+            --track: #1d3352;
+            --context: #7f8a9b;
+            --good-bg: rgba(12, 163, 12, 0.18);
+            --warning-icon: #fab219;
+            --warning-bg: rgba(250, 178, 25, 0.16);
+            --critical-bg: rgba(208, 59, 59, 0.22);
+            --neutral-bg: rgba(255, 255, 255, 0.06);
+            --tooltip-bg: #e7ecf2;
+            --tooltip-text: #0f172a;
+            --tooltip-muted: #475569;
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* =====================================================================
+           Base
+           ===================================================================== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: var(--font);
+            font-size: 15px;
+            line-height: 1.5;
+            background: var(--page);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        button, input, select { font: inherit; color: inherit; }
+        button { cursor: pointer; }
+        button:disabled { cursor: not-allowed; opacity: 0.45; }
+        [hidden] { display: none !important; }
+        a { color: var(--brand-ink); }
+        :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+        .container { max-width: 1320px; margin: 0 auto; padding: 0 20px; }
+        .muted-text { color: var(--text-2); font-size: 0.875rem; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 8px 14px; border-radius: 10px;
+            border: 1px solid var(--border-strong);
+            background: var(--surface); color: var(--text);
+            font-weight: 600; font-size: 0.875rem; line-height: 1.2; white-space: nowrap;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+        .btn:hover:not(:disabled) { background: var(--surface-2); }
+        .btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: var(--brand-strong); }
+        .btn-block { width: 100%; padding: 12px; font-size: 1rem; }
+        .btn-sm { padding: 6px 10px; font-size: 0.8125rem; }
+        .btn-ghost { background: transparent; border-color: transparent; }
+        .icon-btn { width: 34px; height: 34px; padding: 0; }
+        .link-btn {
+            border: 0; background: none; padding: 0; color: var(--brand-ink);
+            font-weight: 600; text-decoration: underline; text-underline-offset: 2px;
+        }
+
+        /* =====================================================================
+           Login
+           ===================================================================== */
+        .login {
+            min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+            background:
+                radial-gradient(circle at 15% 10%, rgba(255, 215, 0, 0.18), transparent 40%),
+                linear-gradient(135deg, var(--topbar-from) 0%, var(--topbar-to) 100%);
+        }
+        .login-card {
+            width: 100%; max-width: 400px; background: var(--surface);
+            border-radius: 18px; padding: 32px 28px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+        }
+        .login-brand { text-align: center; margin-bottom: 24px; }
+        .brand-mark {
+            width: 56px; height: 56px; border-radius: 16px; display: inline-grid; place-items: center;
+            background: linear-gradient(135deg, var(--topbar-from), var(--topbar-to));
+            color: var(--gold); font-size: 24px;
+        }
+        .login-brand h1 { font-size: 1.35rem; margin-top: 12px; line-height: 1.3; }
+        .login-brand p { color: var(--text-2); font-size: 0.9rem; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 6px; }
+        .input {
+            width: 100%; padding: 10px 12px; border-radius: 10px;
+            border: 1px solid var(--border-strong); background: var(--surface);
+        }
+        .input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px var(--focus-ring); }
+        .input-wrap { position: relative; }
+        .input-wrap .input { padding-right: 44px; }
+        .reveal {
+            position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+            width: 36px; height: 36px; border: 0; border-radius: 8px;
+            background: transparent; color: var(--muted);
+        }
+        .login-error {
+            display: flex; align-items: center; gap: 8px; margin: 4px 0 14px;
+            padding: 10px 12px; border-radius: 10px;
+            background: var(--critical-bg); font-size: 0.875rem;
+        }
+        .login-error i { color: var(--critical); }
+        .login-card.shake { animation: shake 0.35s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .login-foot { margin-top: 18px; text-align: center; font-size: 0.8125rem; color: var(--text-2); }
+
+        /* =====================================================================
+           Top bar & tabs
+           ===================================================================== */
+        .topbar { background: linear-gradient(135deg, var(--topbar-from) 0%, var(--topbar-to) 100%); color: #fff; }
+        .topbar-inner {
+            display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap;
+            min-height: 68px; padding-top: 10px; padding-bottom: 10px;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 260px; }
+        .brand .brand-mark { width: 42px; height: 42px; border-radius: 12px; font-size: 18px; background: rgba(255, 255, 255, 0.14); flex-shrink: 0; }
+        .brand h1 { font-size: 1.125rem; font-weight: 700; line-height: 1.2; }
+        .brand p { font-size: 0.8125rem; opacity: 0.85; }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .sync {
+            display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px;
+            border-radius: 999px; background: rgba(255, 255, 255, 0.12); font-size: 0.8125rem;
+            font-variant-numeric: tabular-nums; white-space: nowrap;
+        }
+        .sync .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.25); }
+        .sync.is-sample .dot { background: var(--warning); box-shadow: 0 0 0 3px rgba(250, 178, 25, 0.3); }
+        .sync.is-error .dot { background: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.3); }
+        .sync.is-loading .dot { animation: pulse 1s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+        .top-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            height: 34px; min-width: 34px; padding: 0 10px; border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.1);
+            color: #fff; font-weight: 600; font-size: 0.8125rem;
+        }
+        .top-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .top-btn.is-spinning i { animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .tabbar { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 30; }
+        .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+            padding: 13px 14px 11px; border: 0; border-bottom: 2px solid transparent;
+            background: transparent; color: var(--text-2); font-weight: 600; font-size: 0.9rem;
+        }
+        .tab:hover { color: var(--text); }
+        .tab[aria-selected="true"] { color: var(--brand-ink); border-bottom-color: var(--brand-ink); }
+        .tab .badge {
+            min-width: 20px; padding: 0 6px; border-radius: 999px; font-size: 0.7rem; line-height: 18px;
+            background: var(--critical-bg); color: var(--text); text-align: center;
+        }
+
+        /* Banner */
+        .banner {
+            display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+            margin-top: 16px; padding: 12px 14px; border-radius: 12px;
+            background: var(--warning-bg); border: 1px solid var(--border); font-size: 0.9rem;
+        }
+        .banner > i { color: var(--warning-icon); margin-top: 3px; }
+        .banner .banner-text { flex: 1 1 300px; }
+
+        /* =====================================================================
+           Layout & cards
+           ===================================================================== */
+        main { padding-top: 20px; padding-bottom: 40px; transition: opacity 0.2s; }
+        body.is-refreshing main { opacity: 0.6; }
+        .panel-head {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+        }
+        .panel-head h2 { font-size: 1.25rem; line-height: 1.3; }
+        .panel-head p { color: var(--text-2); font-size: 0.9rem; max-width: 720px; }
         .card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 18px 20px; min-width: 0;
         }
+        .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .card-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; line-height: 1.3; }
+        .card-title > i { color: var(--brand-ink); }
+        .card-sub { color: var(--text-2); font-size: 0.8125rem; margin-top: 2px; }
+        .grid { display: grid; gap: 16px; }
+        .grid-overview { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); margin-bottom: 16px; }
+        .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .stack { display: grid; gap: 16px; align-content: start; }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+        /* KPI tiles */
+        .kpis {
+            display: grid; gap: 16px; margin-bottom: 16px;
+            grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 1fr));
         }
+        .kpi { display: flex; flex-direction: column; gap: 6px; }
+        .kpi-hero { grid-row: span 2; justify-content: center; }
+        .kpi-label { display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; font-weight: 600; color: var(--text-2); }
+        .kpi-label i { color: var(--muted); }
+        .kpi-value { font-size: 1.75rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; }
+        .kpi-hero .kpi-value { font-size: 3rem; letter-spacing: -0.02em; }
+        .kpi-sub { font-size: 0.8125rem; color: var(--text-2); }
+        .kpi-foot { font-size: 0.875rem; color: var(--text-2); display: flex; gap: 6px 16px; flex-wrap: wrap; }
+        .kpi-foot strong { color: var(--text); }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--light-gray);
+        /* Meter / progress */
+        .meter { height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+        .meter > span { display: block; height: 100%; border-radius: 999px; background: var(--series-1); transition: width 0.4s ease; }
+        .meter.lg { height: 10px; }
+        .progress-row {
+            display: flex; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap;
+            font-size: 0.875rem; color: var(--text-2); margin-bottom: 6px;
         }
+        .progress-row strong { color: var(--text); }
+        .progress-row.sm { font-size: 0.8125rem; }
 
-        .card-header h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--dark);
+        /* Chips (status = icon + label, never colour alone) */
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px;
+            border-radius: 999px; font-size: 0.75rem; font-weight: 600; line-height: 1.6;
+            white-space: nowrap; background: var(--neutral-bg); color: var(--text);
         }
+        .chip i { font-size: 0.75rem; color: var(--muted); }
+        .chip.good { background: var(--good-bg); } .chip.good i { color: var(--good); }
+        .chip.warn { background: var(--warning-bg); } .chip.warn i { color: var(--warning-icon); }
+        .chip.bad { background: var(--critical-bg); } .chip.bad i { color: var(--critical); }
+        .chip.info { background: var(--brand-soft); } .chip.info i { color: var(--brand-ink); }
+        .chip.gold { background: var(--gold-soft); } .chip.gold i { color: var(--gold-ink); }
+        .chip.muted { color: var(--text-2); }
+        .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        .card-header i {
-            color: var(--primary);
-            font-size: 1.3rem;
+        /* Avatars */
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+            display: inline-grid; place-items: center;
+            background: var(--brand-soft); color: var(--brand-ink);
+            font-weight: 700; font-size: 0.8125rem;
         }
+        .avatar.lg { width: 48px; height: 48px; font-size: 1rem; }
+        .avatar.gold { background: var(--gold-soft); color: var(--gold-ink); }
 
-        /* Chart Container */
-        .chart-container {
-            height: 280px;
-            position: relative;
-            width: 100%;
+        /* Current round */
+        .recipient {
+            display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+            padding: 14px; margin-bottom: 14px; border-radius: 12px;
+            background: var(--surface-2); border: 1px solid var(--border);
         }
+        .recipient .who-wrap { min-width: 0; flex: 1 1 200px; }
+        .eyebrow { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); }
+        .recipient .who { font-size: 1.1rem; font-weight: 700; }
+        .recipient .meta { font-size: 0.8125rem; color: var(--text-2); }
+        .recipient .amount { text-align: right; display: grid; gap: 4px; justify-items: end; }
+        .recipient .amount strong { font-size: 1.4rem; line-height: 1.2; }
+        .people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+        .people h3 { font-size: 0.8125rem; font-weight: 700; color: var(--text-2); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .name-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .name-pill {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+            border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface);
+            font-size: 0.8125rem; font-weight: 600;
+        }
+        .name-pill:hover { border-color: var(--brand-ink); }
+        .name-pill .owed { color: var(--text-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+        .ic-paid { color: var(--good); }
+        .ic-partial { color: var(--warning-icon); }
+        .ic-missed { color: var(--critical); }
+        .ic-due, .ic-upcoming, .ic-na { color: var(--muted); }
 
-        /* Table Styles - IMPROVED */
-        .table-container {
-            overflow-x: auto;
-            max-height: 500px;
-            overflow-y: auto;
-            border-radius: 8px;
-            border: 1px solid var(--light-gray);
+        /* Lists (upcoming payouts, attention) */
+        .list { list-style: none; display: grid; gap: 2px; }
+        .list-row {
+            width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px;
+            border: 0; border-radius: 10px; background: transparent; text-align: left;
         }
+        .list-row:hover { background: var(--surface-2); }
+        .list-row .main { min-width: 0; flex: 1; display: grid; }
+        .list-row .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-row .meta { font-size: 0.8125rem; color: var(--text-2); }
+        .list-row .right { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; display: grid; justify-items: end; gap: 2px; }
+        .date-badge {
+            width: 46px; flex-shrink: 0; text-align: center; line-height: 1.15; padding: 5px 0;
+            border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
+        }
+        .date-badge .m { display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; color: var(--text-2); }
+        .date-badge .d { display: block; font-size: 1.05rem; font-weight: 700; }
+        .empty { padding: 18px 8px; text-align: center; color: var(--text-2); font-size: 0.9rem; }
+        .empty i { display: block; font-size: 1.4rem; margin-bottom: 6px; color: var(--good); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
+        /* Charts */
+        .chart-box { position: relative; height: 280px; }
+        .legend { display: flex; gap: 6px 16px; flex-wrap: wrap; font-size: 0.8125rem; color: var(--text-2); }
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .key-bar { width: 10px; height: 10px; border-radius: 2px; background: var(--series-1); }
+        .key-line { width: 16px; height: 2px; border-radius: 2px; background: var(--context); }
+        .key-line.series { background: var(--series-1); }
+        .key-tick { width: 2px; height: 12px; background: var(--text-2); }
+        .chart-fallback { display: grid; place-items: center; height: 100%; color: var(--text-2); font-size: 0.875rem; text-align: center; }
 
-        thead {
-            background-color: var(--primary);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+        /* Toolbars & controls */
+        .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .toolbar .spacer { flex: 1; }
+        .search { position: relative; flex: 1 1 220px; max-width: 320px; }
+        .search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.85rem; }
+        .search .input { padding: 8px 12px 8px 34px; }
+        .seg {
+            display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px;
+            border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
         }
+        .seg button {
+            border: 0; background: transparent; padding: 6px 10px; border-radius: 8px;
+            font-size: 0.8125rem; font-weight: 600; color: var(--text-2);
+        }
+        .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+        .seg .n { font-weight: 500; color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+        .legend-row { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        th {
-            padding: 0.9rem;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.9rem;
-            white-space: nowrap;
+        /* Tables */
+        .table-wrap { overflow: auto; max-height: 72vh; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: middle; }
+        thead th {
+            position: sticky; top: 0; z-index: 2; background: var(--surface-2);
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-2);
         }
+        tbody tr:hover > *:not(.cell) { background: var(--row-hover); }
+        tbody th { font-weight: 600; }
+        tfoot th, tfoot td { background: var(--surface-2); font-weight: 700; }
+        tr:last-child > * { border-bottom: 0; }
+        .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .sticky-col { position: sticky; left: 0; z-index: 1; background: var(--surface); border-right: 1px solid var(--border); }
+        thead .sticky-col { z-index: 3; background: var(--surface-2); }
+        tfoot .sticky-col { background: var(--surface-2); }
+        .sub { font-size: 0.75rem; color: var(--text-2); font-weight: 500; margin-top: 2px; }
+        .member-link {
+            border: 0; background: transparent; padding: 0; text-align: left;
+            font-weight: 600; color: var(--text); display: inline-flex; align-items: center; gap: 8px;
+        }
+        .member-link:hover { color: var(--brand-ink); text-decoration: underline; text-underline-offset: 2px; }
+        .turn { font-size: 0.75rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 22px; }
+        th .sort-btn {
+            border: 0; background: none; padding: 0; font: inherit; color: inherit;
+            text-transform: inherit; letter-spacing: inherit; display: inline-flex; align-items: center; gap: 4px;
+        }
+        th .sort-btn i { font-size: 0.7rem; opacity: 0.35; }
+        th[aria-sort] .sort-btn i { opacity: 1; }
+        th.is-current { color: var(--brand-ink); box-shadow: inset 0 -2px 0 var(--brand-ink); }
+        th.out, td.out { opacity: 0.55; }
+        .neg { color: var(--critical); }
+        .mini-meter { height: 4px; border-radius: 999px; background: var(--track); overflow: hidden; margin-top: 5px; min-width: 80px; }
+        .mini-meter > span { display: block; height: 100%; background: var(--series-1); border-radius: 999px; }
 
-        td {
-            padding: 0.7rem 0.9rem;
-            border-bottom: 1px solid var(--light-gray);
-            font-size: 0.9rem;
-        }
+        /* Contribution matrix */
+        .matrix th, .matrix td { padding: 9px 10px; }
+        .matrix td.cell { text-align: right; font-variant-numeric: tabular-nums; min-width: 74px; }
+        .matrix .c { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; }
+        .matrix .st { font-size: 0.7rem; width: 12px; text-align: center; }
+        .cell.s-paid { background: var(--good-bg); } .cell.s-paid .st { color: var(--good); }
+        .cell.s-partial { background: var(--warning-bg); } .cell.s-partial .st { color: var(--warning-icon); }
+        .cell.s-missed { background: var(--critical-bg); } .cell.s-missed .st { color: var(--critical); }
+        .cell.s-due .st { color: var(--muted); }
+        .cell.s-extra { background: var(--neutral-bg); } .cell.s-extra .st { color: var(--muted); }
+        .cell.s-upcoming, .cell.s-na { color: var(--muted); }
+        .cell.s-na { opacity: 0.55; }
+        .cell.is-payout { box-shadow: inset 0 0 0 2px var(--gold-ring); }
+        .payout-ic { color: var(--gold-ink); font-size: 0.75rem; }
+        .dash { color: var(--muted); }
 
-        tbody tr:hover {
-            background-color: rgba(0, 82, 155, 0.05);
+        /* Rotation timeline */
+        .rotation-info {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+            padding: 12px 14px; border-radius: 12px; background: var(--brand-soft); font-size: 0.875rem;
         }
+        .rotation-info > i { color: var(--brand-ink); }
+        .rotation-info .txt { flex: 1 1 280px; }
+        .timeline { list-style: none; display: grid; }
+        .tl-item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; position: relative; padding-bottom: 14px; }
+        .tl-item::before {
+            content: ""; position: absolute; left: 27px; top: 56px; bottom: 0; width: 2px; background: var(--border-strong);
+        }
+        .tl-item:last-child::before { display: none; }
+        .tl-badge {
+            width: 56px; height: 56px; border-radius: 16px; display: grid; place-content: center; text-align: center;
+            background: var(--surface); border: 1px solid var(--border-strong);
+            font-weight: 700; font-size: 1.1rem; line-height: 1.05; font-variant-numeric: tabular-nums;
+        }
+        .tl-badge small { display: block; font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); }
+        .tl-item.done .tl-badge { background: var(--good-bg); border-color: transparent; }
+        .tl-item.pending .tl-badge { background: var(--warning-bg); border-color: transparent; }
+        .tl-item.current .tl-badge { background: var(--brand); border-color: var(--brand); color: #fff; }
+        .tl-item.current .tl-badge small { color: rgba(255, 255, 255, 0.85); }
+        .tl-item.current .tl-card { border-color: var(--brand-ink); box-shadow: 0 0 0 1px var(--brand-ink), var(--shadow); }
+        .tl-card {
+            display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
+            gap: 12px 20px; align-items: center; padding: 14px 16px;
+        }
+        .tl-month { font-weight: 700; }
+        .tl-month span { color: var(--text-2); font-weight: 500; font-size: 0.8125rem; }
+        .tl-names { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; }
+        .tl-amount { text-align: right; display: grid; justify-items: end; gap: 4px; }
+        .tl-amount strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
-        .total-row {
-            background-color: rgba(0, 82, 155, 0.08);
-            font-weight: 700;
+        /* Dialogs */
+        dialog {
+            border: 0; border-radius: 18px; padding: 0; margin: auto;
+            width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 32px);
+            background: var(--surface); color: var(--text);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
         }
+        dialog[open] { display: flex; flex-direction: column; }
+        dialog::backdrop { background: rgba(10, 15, 25, 0.55); }
+        dialog > form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+        .dlg-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+        }
+        .dlg-head h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+        .dlg-body { padding: 18px 20px; overflow-y: auto; flex: 1; min-height: 0; }
+        .dlg-foot {
+            display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
+            padding: 14px 20px; border-top: 1px solid var(--border);
+        }
+        .dlg-foot .spacer { flex: 1; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .hint { font-size: 0.75rem; color: var(--text-2); margin-top: 4px; }
+        .section-title { font-size: 0.9rem; font-weight: 700; margin: 20px 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .order-list { list-style: none; border: 1px solid var(--border); border-radius: 12px; max-height: 300px; overflow-y: auto; }
+        .order-list li { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 10px; border-bottom: 1px solid var(--border); }
+        .order-list li:last-child { border-bottom: 0; }
+        .order-list .pos { width: 26px; text-align: center; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
+        .order-list .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+        .order-list .mo { width: 44px; font-size: 0.8125rem; color: var(--text-2); }
+        .tips { margin-top: 18px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: 0.8125rem; color: var(--text-2); }
+        .tips strong { color: var(--text); }
+        .tips ul { margin: 6px 0 0 18px; }
+        .tips code { font-size: 0.8rem; background: var(--neutral-bg); padding: 1px 5px; border-radius: 4px; color: var(--text); }
 
-        .member-name {
-            font-weight: 600;
-            color: var(--dark);
+        /* Member detail */
+        .member-hero { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .member-hero .mh-main { flex: 1 1 200px; min-width: 0; }
+        .member-hero .mh-meta { color: var(--text-2); font-size: 0.875rem; }
+        .payout-box {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px;
+            padding: 12px 14px; border-radius: 12px; background: var(--gold-soft);
         }
+        .payout-box > i { color: var(--gold-ink); font-size: 1.1rem; }
+        .payout-box .pb-text { flex: 1 1 220px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0 18px; }
+        .stat { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+        .stat .l { font-size: 0.75rem; font-weight: 600; color: var(--text-2); }
+        .stat .v { font-weight: 700; font-size: 1.05rem; }
+        .month-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+        .ms { border-radius: 10px; padding: 8px 6px; text-align: center; font-size: 0.75rem; border: 1px solid var(--border); }
+        .ms .m { font-weight: 700; color: var(--text-2); display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .ms .a { font-weight: 700; font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+        .ms .l { display: flex; align-items: center; justify-content: center; gap: 4px; color: var(--text-2); }
+        .ms.s-paid { background: var(--good-bg); border-color: transparent; }
+        .ms.s-partial { background: var(--warning-bg); border-color: transparent; }
+        .ms.s-missed { background: var(--critical-bg); border-color: transparent; }
+        .ms.s-extra { background: var(--neutral-bg); border-color: transparent; }
+        .ms.s-na { opacity: 0.55; }
+        .ms.is-payout { box-shadow: inset 0 0 0 2px var(--gold-ring); }
 
-        .amount-cell {
-            text-align: right;
-            font-family: 'Courier New', monospace;
-            font-weight: 500;
-        }
+        /* Sheet embed */
+        .iframe-box { height: 70vh; min-height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #fff; }
+        .iframe-box iframe { width: 100%; height: 100%; border: 0; }
 
-        /* Embed Container */
-        .embed-container {
-            grid-column: 1 / -1;
+        /* Toast */
+        .toast {
+            position: fixed; left: 50%; bottom: 24px; z-index: 100; max-width: calc(100vw - 32px);
+            transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+            padding: 10px 16px; border-radius: 10px; font-size: 0.875rem;
+            background: var(--tooltip-bg); color: var(--tooltip-text); box-shadow: var(--shadow);
+            transition: opacity 0.2s, transform 0.2s;
         }
-
-        .iframe-container {
-            height: 500px;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            border: 1px solid var(--light-gray);
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Summary Cards - IMPROVED */
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 2rem;
-        }
-
-        .summary-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 1.2rem;
-            box-shadow: var(--box-shadow);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: var(--transition);
-        }
-
-        .summary-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .summary-icon {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .summary-content h3 {
-            font-size: 0.9rem;
-            color: var(--gray);
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .summary-content .value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--dark);
-            line-height: 1.2;
-        }
-
-        /* Currency Format Note */
-        .currency-note {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-top: 8px;
-            font-style: italic;
-            text-align: center;
-        }
-
-        /* Alert - IMPROVED */
-        .alert {
-            background-color: rgba(0, 82, 155, 0.1);
-            border-left: 4px solid var(--primary);
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .alert-content {
-            flex: 1;
-            font-size: 0.95rem;
-        }
-
-        .alert-content p {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Logout Button */
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 0.5rem 1.2rem;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
         /* Footer */
-        footer {
-            text-align: center;
-            padding: 1.5rem 0;
-            color: var(--gray);
-            border-top: 1px solid var(--light-gray);
-            margin-top: 2rem;
-            font-size: 0.9rem;
+        .footer { border-top: 1px solid var(--border); padding: 20px 0 28px; color: var(--text-2); font-size: 0.8125rem; }
+        .footer .container { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+        .footer a { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* =====================================================================
+           Responsive
+           ===================================================================== */
+        @media (max-width: 1080px) {
+            .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .kpi-hero { grid-column: 1 / -1; grid-row: auto; }
+            .grid-overview, .grid-2 { grid-template-columns: minmax(0, 1fr); }
+        }
+        @media (max-width: 760px) {
+            .tl-card { grid-template-columns: minmax(0, 1fr); }
+            .tl-amount { text-align: left; justify-items: start; }
+            .top-btn .label { display: none; }
+            .people { grid-template-columns: minmax(0, 1fr); }
+            .recipient .amount { text-align: left; justify-items: start; }
+        }
+        @media (max-width: 600px) {
+            .container { padding: 0 16px; }
+            .kpis { grid-template-columns: minmax(0, 1fr); }
+            .form-grid { grid-template-columns: minmax(0, 1fr); }
+            .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .month-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .card { padding: 16px; }
+            .sync { order: 10; }
+            .search { max-width: none; }
+            .tl-item { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
+            .tl-badge { width: 44px; height: 44px; border-radius: 12px; font-size: 0.95rem; }
+            .tl-item::before { left: 21px; top: 44px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
         }
 
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: var(--primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9rem;
-        }
-
-        .footer-links a:hover {
-            text-decoration: underline;
-        }
-
-        /* Loading State */
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            font-size: 1rem;
-            color: var(--gray);
-            text-align: center;
-        }
-
-        .loading i {
-            margin-right: 10px;
-            animation: spin 1.5s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .login-card {
-                padding: 1.8rem;
-            }
-            
-            .login-logo h1 {
-                font-size: 1.3rem;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            
-            .logo {
-                flex-direction: column;
-                text-align: center;
-                min-width: auto;
-            }
-            
-            .logo i {
-                margin-bottom: 10px;
-            }
-            
-            .header-right {
-                width: 100%;
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .total-savings-card {
-                width: 100%;
-            }
-            
-            .dashboard-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .summary-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .refresh-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .refresh-info {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            
-            .data-source-selector {
-                gap: 8px;
-            }
-            
-            .data-source-btn {
-                padding: 0.6rem 1rem;
-                font-size: 0.85rem;
-            }
-            
-            .card {
-                padding: 1.2rem;
-            }
-            
-            th, td {
-                padding: 0.6rem;
-                font-size: 0.85rem;
-            }
-            
-            .alert {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-card {
-                padding: 1.5rem;
-            }
-            
-            .login-logo i {
-                font-size: 2.2rem;
-                padding: 12px;
-            }
-            
-            .login-logo h1 {
-                font-size: 1.2rem;
-            }
-            
-            .form-control {
-                padding: 0.6rem 0.9rem;
-            }
-            
-            .summary-card {
-                padding: 1rem;
-            }
-            
-            .summary-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.3rem;
-            }
-            
-            .summary-content .value {
-                font-size: 1.3rem;
-            }
-            
-            .footer-links {
-                flex-direction: column;
-                gap: 10px;
-            }
+        /* =====================================================================
+           Print: show the active tab only, no controls
+           ===================================================================== */
+        @media print {
+            body { background: #fff; font-size: 12px; }
+            .topbar { background: none !important; color: #000; }
+            .topbar-actions, .tabbar, .toolbar, .banner, .footer, .round-nav, .no-print, .toast { display: none !important; }
+            .card { box-shadow: none; break-inside: avoid; }
+            .table-wrap { max-height: none; overflow: visible; }
+            .sticky-col, thead th { position: static; }
+            main { padding-top: 8px; }
         }
     </style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="login-page" class="login-container">
-        <div class="login-card">
-            <div class="login-logo">
-                <i class="fas fa-coins"></i>
+    <!-- =========================================================================
+         Login
+         ========================================================================= -->
+    <div id="login-page" class="login" hidden>
+        <div class="login-card" id="login-card">
+            <div class="login-brand">
+                <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-coins"></i></span>
                 <h1>HR RSA Savings Dashboard</h1>
-                <p>Secure Access Required</p>
+                <p>Rotating savings · Mag tipid na kayo!!</p>
             </div>
-            
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="username">
-                        <i class="fas fa-user"></i> Username
-                    </label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        class="form-control" 
-                        placeholder="Enter username"
-                        required
-                    >
+            <form id="login-form" novalidate>
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input id="username" class="input" type="text" autocomplete="username" required>
                 </div>
-                
-                <div class="form-group">
-                    <label for="password">
-                        <i class="fas fa-lock"></i> Password
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        class="form-control" 
-                        placeholder="Enter password"
-                        required
-                    >
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <input id="password" class="input" type="password" autocomplete="current-password" required>
+                        <button type="button" class="reveal" id="toggle-password" aria-label="Show password" aria-pressed="false">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                
-                <div id="login-error" class="error-message">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span id="error-text">Invalid username or password</span>
+                <div id="login-error" class="login-error" role="alert" hidden>
+                    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                    <span>Incorrect username or password.</span>
                 </div>
-                
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Log in
                 </button>
             </form>
+            <p class="login-foot">You stay signed in until you close this tab or log out.</p>
         </div>
     </div>
 
-    <!-- Dashboard (Hidden until login) -->
-    <div id="dashboard" class="dashboard-container">
-        <header>
-            <div class="container">
-                <div class="header-content">
-                    <div class="logo">
-                        <i class="fas fa-coins"></i>
-                        <div class="logo-text">
-                            <h1>HR RSA Savings Dashboard 2026</h1>
-                            <p>Track your contributions. Mag tipid na kayo!!</p>
-                        </div>
+    <!-- =========================================================================
+         Dashboard
+         ========================================================================= -->
+    <div id="app" hidden>
+        <header class="topbar">
+            <div class="container topbar-inner">
+                <div class="brand">
+                    <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-coins"></i></span>
+                    <div>
+                        <h1>HR RSA Savings Dashboard <span id="brand-year">2026</span></h1>
+                        <p>Rotating savings · Track contributions &amp; payouts. Mag tipid na kayo!!</p>
                     </div>
-                    
-                    <div class="header-right">
-                        <div class="total-savings-card">
-                            <h3>Total Savings (2026)</h3>
-                            <div class="total-amount">
-                                <span id="total-savings">₱0</span>
-                            </div>
-                            <div class="auto-refresh-indicator">
-                                <span class="dot"></span>
-                                <span>Auto-refresh: <span id="refresh-countdown">5:00</span></span>
-                            </div>
-                        </div>
-                        
-                        <button id="logout-btn" class="logout-btn" title="Logout">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
-                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <span id="sync" class="sync" role="status" aria-live="polite">
+                        <span class="dot" aria-hidden="true"></span><span id="sync-text">Connecting…</span>
+                    </span>
+                    <button class="top-btn" id="refresh-btn" data-action="refresh" title="Refresh data now">
+                        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span class="label">Refresh</span>
+                    </button>
+                    <button class="top-btn" data-action="settings" title="Cycle settings">
+                        <i class="fa-solid fa-gear" aria-hidden="true"></i><span class="label">Settings</span>
+                    </button>
+                    <button class="top-btn" id="theme-btn" data-action="theme" title="Toggle dark mode" aria-label="Toggle dark mode">
+                        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                    </button>
+                    <button class="top-btn" data-action="logout" title="Log out">
+                        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span class="label">Log out</span>
+                    </button>
                 </div>
             </div>
         </header>
 
+        <nav class="tabbar" aria-label="Dashboard sections">
+            <div class="container tabs" role="tablist">
+                <button class="tab" role="tab" id="tab-overview" data-tab="overview" aria-controls="panel-overview">
+                    <i class="fa-solid fa-gauge-high" aria-hidden="true"></i> Overview
+                </button>
+                <button class="tab" role="tab" id="tab-contributions" data-tab="contributions" aria-controls="panel-contributions">
+                    <i class="fa-solid fa-table-cells" aria-hidden="true"></i> Contributions
+                </button>
+                <button class="tab" role="tab" id="tab-schedule" data-tab="schedule" aria-controls="panel-schedule">
+                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Payout schedule
+                </button>
+                <button class="tab" role="tab" id="tab-members" data-tab="members" aria-controls="panel-members">
+                    <i class="fa-solid fa-users" aria-hidden="true"></i> Members <span class="badge" id="behind-badge" hidden></span>
+                </button>
+                <button class="tab" role="tab" id="tab-sheet" data-tab="sheet" aria-controls="panel-sheet">
+                    <i class="fa-brands fa-google" aria-hidden="true"></i> Google Sheet
+                </button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div id="banner" class="banner" role="alert" hidden></div>
+        </div>
+
         <main class="container">
-            <div class="alert">
-                <div class="alert-content">
-                    <p><i class="fas fa-sync-alt"></i> <strong>Auto-refresh:</strong> Data updates every 5 minutes. Last updated: <span id="last-updated-time">Never</span></p>
-                </div>
-                <div class="refresh-controls">
-                    <div class="refresh-info">
-                        <div class="last-updated">
-                            <i class="fas fa-clock"></i> Next refresh: <span id="next-refresh-time">5:00</span>
-                        </div>
-                    </div>
-                    <button id="manual-refresh-btn" class="refresh-btn">
-                        <i class="fas fa-redo"></i> Refresh Now
-                    </button>
-                </div>
-            </div>
+            <!-- Overview -->
+            <section id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
+                <div id="kpis" class="kpis"></div>
 
-            <div class="data-source-selector">
-                <button id="load-data-btn" class="data-source-btn active">
-                    <i class="fas fa-sync-alt"></i> Load Data from Sheets
-                </button>
-                <button id="show-iframe-btn" class="data-source-btn">
-                    <i class="fab fa-google"></i> Show Google Sheets
-                </button>
-                <button id="show-charts-btn" class="data-source-btn">
-                    <i class="fas fa-chart-bar"></i> Show Charts & Table
-                </button>
-            </div>
-
-            <!-- Summary Cards -->
-            <div class="summary-cards">
-                <div class="summary-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-user-friends"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h3>Total Members</h3>
-                        <div class="value" id="total-members">0</div>
-                    </div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h3>Current Month</h3>
-                        <div class="value" id="current-month">January</div>
-                    </div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h3>Top Saver</h3>
-                        <div class="value" id="top-saver">-</div>
-                        <div class="currency-note">Highest total savings</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts View -->
-            <div id="charts-view">
-                <div class="dashboard-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2>Monthly Savings Trend</h2>
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="monthlyChart"></canvas>
-                        </div>
-                        <div class="currency-note">
-                            Values in thousands (₱1,000)
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <h2>Member Contributions</h2>
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="contributionsChart"></canvas>
-                        </div>
-                        <div class="currency-note">
-                            Based on total savings in thousands
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <h2>Detailed Savings Table</h2>
-                            <i class="fas fa-table"></i>
-                        </div>
-                        <div class="table-container">
-                            <div class="loading" id="table-loading">
-                                <i class="fas fa-spinner"></i> Loading data from Google Sheets...
+                <div class="grid grid-overview">
+                    <article id="round-card" class="card"></article>
+                    <div class="stack">
+                        <article class="card">
+                            <div class="card-head">
+                                <div>
+                                    <h2 class="card-title"><i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i> Upcoming payouts</h2>
+                                    <div class="card-sub">Who receives the pot next</div>
+                                </div>
+                                <button class="btn btn-sm btn-ghost" data-goto="schedule">View all</button>
                             </div>
-                            <table id="savings-table">
-                                <!-- Table will be populated by JavaScript -->
-                            </table>
-                        </div>
-                        <div class="currency-note">
-                            All values displayed in peso format
-                        </div>
+                            <ul id="upcoming-list" class="list"></ul>
+                        </article>
+                        <article class="card">
+                            <div class="card-head">
+                                <div>
+                                    <h2 class="card-title"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Needs attention</h2>
+                                    <div class="card-sub">Overdue contributions &amp; unreleased payouts</div>
+                                </div>
+                                <button class="btn btn-sm btn-ghost" data-action="show-behind">View all</button>
+                            </div>
+                            <ul id="attention-list" class="list"></ul>
+                        </article>
                     </div>
                 </div>
-            </div>
 
-            <!-- Google Sheets Iframe View -->
-            <div id="iframe-view" class="card embed-container" style="display: none;">
-                <div class="card-header">
-                    <h2>Google Sheets Data</h2>
-                    <i class="fab fa-google"></i>
+                <div class="grid grid-2">
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <h2 class="card-title"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Monthly collection</h2>
+                                <div class="card-sub">Collected each round vs the expected pot</div>
+                            </div>
+                            <div class="legend" aria-hidden="true">
+                                <span><span class="key-bar"></span>Collected</span>
+                                <span><span class="key-line"></span>Expected pot</span>
+                            </div>
+                        </div>
+                        <div class="chart-box"><canvas id="chart-monthly" role="img" aria-label="Monthly collection chart"></canvas></div>
+                    </article>
+                    <article class="card">
+                        <div class="card-head">
+                            <div>
+                                <h2 class="card-title"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Savings growth</h2>
+                                <div class="card-sub">Cumulative contributions vs target</div>
+                            </div>
+                            <div class="legend" aria-hidden="true">
+                                <span><span class="key-line series"></span>Collected</span>
+                                <span><span class="key-line"></span>Target</span>
+                            </div>
+                        </div>
+                        <div class="chart-box"><canvas id="chart-cumulative" role="img" aria-label="Cumulative savings chart"></canvas></div>
+                    </article>
                 </div>
-                <div class="iframe-container">
-                    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQCB3v4YuYMzzboHrQbqmnk7MpMj6x5Mq_2LPI56mT7uAdiQAWNeWGz3p_L7yGvT0NtM6TRjg-KDPdk/pubhtml?widget=true&amp;headers=false"></iframe>
+            </section>
+
+            <!-- Contributions matrix -->
+            <section id="panel-contributions" class="tab-panel" role="tabpanel" aria-labelledby="tab-contributions" hidden>
+                <div class="panel-head">
+                    <div>
+                        <h2>Contribution tracker</h2>
+                        <p>Every member's payment for every round. The <i class="fa-solid fa-coins payout-ic" aria-hidden="true"></i> outlined cell is the month that member receives the pot.</p>
+                    </div>
                 </div>
-            </div>
+                <div class="toolbar">
+                    <label class="search">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <span class="sr-only">Search members</span>
+                        <input id="matrix-search" class="input" type="search" placeholder="Search members">
+                    </label>
+                    <div class="legend-row" aria-label="Legend">
+                        <span class="chip good"><i class="fa-solid fa-check"></i>Paid</span>
+                        <span class="chip warn"><i class="fa-solid fa-circle-half-stroke"></i>Partial</span>
+                        <span class="chip bad"><i class="fa-solid fa-xmark"></i>Missed</span>
+                        <span class="chip"><i class="fa-regular fa-clock"></i>Due now</span>
+                        <span class="chip gold"><i class="fa-solid fa-coins"></i>Payout month</span>
+                    </div>
+                    <span class="spacer"></span>
+                    <button class="btn btn-sm" data-action="export-matrix"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> Export CSV</button>
+                    <button class="btn btn-sm" data-action="print"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+                </div>
+                <div class="table-wrap">
+                    <table id="matrix" class="matrix"></table>
+                </div>
+            </section>
+
+            <!-- Payout schedule -->
+            <section id="panel-schedule" class="tab-panel" role="tabpanel" aria-labelledby="tab-schedule" hidden>
+                <div class="panel-head">
+                    <div>
+                        <h2>Payout schedule</h2>
+                        <p>The rotation: each round, everyone contributes and one member takes home the pot.</p>
+                    </div>
+                    <div class="toolbar" style="margin:0">
+                        <button class="btn btn-sm" data-action="edit-rotation"><i class="fa-solid fa-pen" aria-hidden="true"></i> Edit rotation</button>
+                        <button class="btn btn-sm" data-action="print"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+                    </div>
+                </div>
+                <div id="rotation-info" class="rotation-info"></div>
+                <ol id="timeline" class="timeline"></ol>
+            </section>
+
+            <!-- Members ledger -->
+            <section id="panel-members" class="tab-panel" role="tabpanel" aria-labelledby="tab-members" hidden>
+                <div class="panel-head">
+                    <div>
+                        <h2>Member ledger</h2>
+                        <p>Where each member stands: what they've paid, what's due, and their payout. Select a name for the full history.</p>
+                    </div>
+                </div>
+                <div class="toolbar">
+                    <label class="search">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <span class="sr-only">Search members</span>
+                        <input id="ledger-search" class="input" type="search" placeholder="Search members">
+                    </label>
+                    <div class="seg" id="ledger-filters" role="group" aria-label="Filter members"></div>
+                    <span class="spacer"></span>
+                    <button class="btn btn-sm" data-action="export-ledger"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> Export CSV</button>
+                    <button class="btn btn-sm" data-action="print"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+                </div>
+                <div class="table-wrap" style="margin-bottom:16px">
+                    <table id="ledger"></table>
+                </div>
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2 class="card-title"><i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Paid to date by member</h2>
+                            <div class="card-sub">Bars show what each member has paid; the tick marks what they should have paid by now</div>
+                        </div>
+                        <div class="legend" aria-hidden="true">
+                            <span><span class="key-bar"></span>Paid</span>
+                            <span><span class="key-tick"></span>Due to date</span>
+                        </div>
+                    </div>
+                    <div class="chart-box" id="member-chart-box"><canvas id="chart-members" role="img" aria-label="Paid to date by member chart"></canvas></div>
+                </article>
+            </section>
+
+            <!-- Google Sheet -->
+            <section id="panel-sheet" class="tab-panel" role="tabpanel" aria-labelledby="tab-sheet" hidden>
+                <div class="panel-head">
+                    <div>
+                        <h2>Source spreadsheet</h2>
+                        <p>The published Google Sheet this dashboard reads from.</p>
+                    </div>
+                    <a class="btn btn-sm" id="open-sheet-link" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open in Google Sheets
+                    </a>
+                </div>
+                <div class="iframe-box"><iframe id="sheet-frame" title="Google Sheet" loading="lazy"></iframe></div>
+            </section>
         </main>
 
-        <footer>
+        <footer class="footer">
             <div class="container">
-                <p>HR RSA Savings Dashboard 2026 - Philippine Peso (Thousands) &copy; All rights reserved</p>
-                <div class="footer-links">
-                    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQCB3v4YuYMzzboHrQbqmnk7MpMj6x5Mq_2LPI56mT7uAdiQAWNeWGz3p_L7yGvT0NtM6TRjg-KDPdk/pubhtml" target="_blank">
-                        <i class="fas fa-external-link-alt"></i> Open Google Sheet
-                    </a>
-                    </a>
-                </div>
+                <span>HR RSA Savings Dashboard <span id="footer-year">2026</span> · Philippine Peso (₱) · <span id="footer-source">Google Sheets</span></span>
+                <a id="footer-sheet-link" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open Google Sheet</a>
             </div>
         </footer>
     </div>
 
+    <!-- =========================================================================
+         Settings dialog
+         ========================================================================= -->
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+        <form id="settings-form" novalidate>
+            <div class="dlg-head">
+                <h2 id="settings-title"><i class="fa-solid fa-gear" aria-hidden="true"></i> Cycle settings</h2>
+                <button type="button" class="btn btn-ghost icon-btn" data-action="close-dialog" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="dlg-body">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="set-contribution">Monthly contribution per member (₱)</label>
+                        <input id="set-contribution" class="input" type="number" min="0" step="0.01" inputmode="decimal">
+                        <div class="hint" id="hint-contribution"></div>
+                    </div>
+                    <div class="field">
+                        <label for="set-start">Cycle starts</label>
+                        <select id="set-start" class="input"></select>
+                        <div class="hint">First round of contributions.</div>
+                    </div>
+                    <div class="field">
+                        <label for="set-day">Payout day of the month</label>
+                        <input id="set-day" class="input" type="number" min="1" max="31" step="1" inputmode="numeric">
+                        <div class="hint">Use 15 for kinsenas or 30 for katapusan. Short months use their last day.</div>
+                    </div>
+                    <div class="field">
+                        <label for="set-year">Cycle year</label>
+                        <input id="set-year" class="input" type="number" min="2000" max="2100" step="1" inputmode="numeric">
+                        <div class="hint">The year the sheet's month columns belong to.</div>
+                    </div>
+                </div>
+
+                <div class="section-title" id="rotation-section">
+                    <span>Payout rotation <span class="muted-text" id="order-source"></span></span>
+                    <span class="chips">
+                        <button type="button" class="btn btn-sm" data-action="draw-lots"><i class="fa-solid fa-shuffle" aria-hidden="true"></i> Draw lots</button>
+                        <button type="button" class="btn btn-sm" data-action="reset-order-draft"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Use sheet order</button>
+                    </span>
+                </div>
+                <ol id="order-list" class="order-list"></ol>
+
+                <div class="tips">
+                    <strong>Settings are saved in this browser only.</strong> To share the rotation with everyone, add these optional columns to the Google Sheet (any order, header row anywhere in the first rows):
+                    <ul>
+                        <li><code>Payout Month</code>: the month (or date) the member receives the pot, e.g. <code>March</code> or <code>3/30/2026</code></li>
+                        <li><code>Contribution</code>: the member's monthly share, if it differs from the usual amount</li>
+                        <li><code>Received</code>: <code>Yes</code>/<code>No</code> to confirm payouts that have been released</li>
+                    </ul>
+                    A member who holds two slots (two turns) should be listed on two rows.
+                    <div id="detected-columns" style="margin-top:8px"></div>
+                </div>
+            </div>
+            <div class="dlg-foot">
+                <button type="button" class="btn btn-sm" data-action="reset-settings"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Reset all</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-action="close-dialog">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save settings</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- =========================================================================
+         Member detail dialog
+         ========================================================================= -->
+    <dialog id="member-dialog" aria-labelledby="member-title">
+        <div class="dlg-head">
+            <h2 id="member-title">Member</h2>
+            <button type="button" class="btn btn-ghost icon-btn" data-action="close-dialog" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="dlg-body" id="member-body"></div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
     <script>
-        // Login credentials (keep same)
-        const VALID_USERNAME = "hrrsa-admin";
-        const VALID_PASSWORD = "2026savings!";
-        
-        // Google Sheets configuration (keep same)
+    (function () {
+        'use strict';
+
+        /* =====================================================================
+           CONFIGURATION: edit these values to adapt the dashboard
+           ===================================================================== */
         const SHEET_ID = '2PACX-1vQCB3v4YuYMzzboHrQbqmnk7MpMj6x5Mq_2LPI56mT7uAdiQAWNeWGz3p_L7yGvT0NtM6TRjg-KDPdk';
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv`;
-        
-        // Months for the year (keep same)
-        const MONTHS = ["January", "February", "March", "April", "May", "June", 
-                       "July", "August", "September", "October", "November", "December"];
-        
-        // Current month for display (keep same)
-        const CURRENT_MONTH_INDEX = new Date().getMonth();
-        const CURRENT_MONTH = MONTHS[Math.min(CURRENT_MONTH_INDEX, 11)];
-        
-        // Chart instances (keep same)
-        let monthlyChart = null;
-        let contributionsChart = null;
-        
-        // Auto-refresh variables (keep same)
-        let refreshCountdown = 300;
-        let lastUpdateTime = null;
-        
-        // All the existing JavaScript functions remain exactly the same
-        // I'm keeping the same JavaScript code, only CSS was fixed
-        
-        // Format currency in Philippine Peso (in thousands)
-        function formatCurrencyThousands(amount) {
-            const amountInThousands = amount / 1000;
-            return `₱${amountInThousands.toLocaleString('en-PH', {
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1
-            })}k`;
+        const CONFIG = {
+            // NOTE: this login only hides the page from casual visitors. Anyone who
+            // views the page source can read these values, and the published sheet
+            // itself is public. Don't put sensitive personal data in the sheet.
+            username: 'hrrsa-admin',
+            password: '2026savings!',
+
+            sheetCsvUrl: `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv`,
+            sheetEmbedUrl: `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pubhtml?widget=true&headers=false`,
+            sheetOpenUrl: `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pubhtml`,
+
+            cycleYear: 2026,          // year the month columns refer to
+            defaultPayoutDay: 30,     // payout day of month (clamped to month length)
+            refreshSeconds: 300,      // auto-refresh interval (5 minutes)
+            requestTimeoutMs: 20000,
+            locale: 'en-PH',
+            currency: 'PHP'
+        };
+
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+        const MON = MONTHS.map(m => m.slice(0, 3));
+        const KEYS = { settings: 'rsa-settings-v1', theme: 'rsa-theme', auth: 'rsa-auth' };
+        const TABS = ['overview', 'contributions', 'schedule', 'members', 'sheet'];
+
+        /* =====================================================================
+           Small utilities
+           ===================================================================== */
+        const $ = (sel, root = document) => root.querySelector(sel);
+        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+        function makeStore(area) {
+            return {
+                get(key) { try { return window[area].getItem(key); } catch (e) { return null; } },
+                set(key, value) { try { window[area].setItem(key, value); } catch (e) { /* ignore */ } },
+                remove(key) { try { window[area].removeItem(key); } catch (e) { /* ignore */ } }
+            };
         }
-        
-        // Format currency for charts (no 'k' suffix)
-        function formatCurrencyChart(amount) {
-            const amountInThousands = amount / 1000;
-            return `₱${amountInThousands.toLocaleString('en-PH', {
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1
-            })}`;
+        const local = makeStore('localStorage');
+        const session = makeStore('sessionStorage');
+
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+        const sum = (arr, fn = (x) => x) => r2(arr.reduce((s, x) => s + (Number(fn(x)) || 0), 0));
+        const range = (a, b) => { const out = []; for (let i = a; i <= b; i++) out.push(i); return out; };
+        const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+
+        const fmtWhole = new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: CONFIG.currency, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const fmtCents = new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: CONFIG.currency, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtCompact = new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: CONFIG.currency, notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 1 });
+        const numWhole = new Intl.NumberFormat(CONFIG.locale, { maximumFractionDigits: 0 });
+        const numCents = new Intl.NumberFormat(CONFIG.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const peso = (n) => { const v = r2(n); return (Number.isInteger(v) ? fmtWhole : fmtCents).format(v); };
+        const pesoCompact = (n) => Math.abs(n) < 10000 ? peso(n) : fmtCompact.format(n);
+        // Axis ticks: one format for the whole axis (compact once the axis reaches 10K)
+        function axisTick(value) { return Math.max(Math.abs(this.max), Math.abs(this.min)) >= 10000 ? fmtCompact.format(value) : peso(value); }
+        const num = (n) => { const v = r2(n); return (Number.isInteger(v) ? numWhole : numCents).format(v); };
+        const signedPeso = (n) => { const v = r2(n); return v > 0 ? '+' + peso(v) : v < 0 ? '−' + peso(-v) : peso(0); };
+        const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
+
+        const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const daysBetween = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / 86400000);
+        const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
+        const fmtDate = (d) => d.toLocaleDateString(CONFIG.locale, { month: 'short', day: 'numeric' });
+        const fmtDateLong = (d) => d.toLocaleDateString(CONFIG.locale, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+        const fmtTime = (d) => d.toLocaleTimeString(CONFIG.locale, { hour: 'numeric', minute: '2-digit' });
+        function relDays(n) {
+            if (n === 0) return 'today';
+            if (n === 1) return 'tomorrow';
+            if (n === -1) return 'yesterday';
+            return n > 0 ? `in ${n} days` : `${-n} days ago`;
         }
-        
-        // Format number with comma separators for table (in thousands)
-        function formatNumberThousands(number) {
-            return parseFloat(number).toLocaleString('en-PH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+        function initials(name) {
+            const words = String(name).replace(/\(.*?\)/g, '').trim().split(/\s+/).filter(Boolean);
+            if (!words.length) return '?';
+            const first = words[0][0] || '';
+            const last = words.length > 1 ? words[words.length - 1][0] : (words[0][1] || '');
+            return (first + last).toUpperCase();
         }
-        
-        // Update countdown timer
-        function updateCountdown() {
-            refreshCountdown--;
-            
-            if (refreshCountdown <= 0) {
-                refreshCountdown = 300;
-                loadDataFromSheets();
-            }
-            
-            const minutes = Math.floor(refreshCountdown / 60);
-            const seconds = refreshCountdown % 60;
-            const countdownStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
-            document.getElementById('refresh-countdown').textContent = countdownStr;
-            document.getElementById('next-refresh-time').textContent = countdownStr;
+        const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        let toastTimer = null;
+        function toast(message) {
+            const el = $('#toast');
+            el.textContent = message;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
         }
-        
-        // Update last updated time
-        function updateLastUpdatedTime() {
-            const now = new Date();
-            lastUpdateTime = now;
-            
-            const timeStr = now.toLocaleTimeString('en-PH', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            
-            document.getElementById('last-updated-time').textContent = timeStr;
+
+        /* =====================================================================
+           Status vocabularies (icon + label; colour is never the only signal)
+           ===================================================================== */
+        const CELL = {
+            paid:     { icon: 'fa-check',              label: 'Paid' },
+            partial:  { icon: 'fa-circle-half-stroke', label: 'Partial' },
+            missed:   { icon: 'fa-xmark',              label: 'Missed' },
+            due:      { icon: 'fa-clock',              label: 'Due now' },
+            upcoming: { icon: '',                      label: 'Upcoming' },
+            extra:    { icon: 'fa-plus',               label: 'Outside cycle' },
+            na:       { icon: '',                      label: 'Not in cycle' }
+        };
+        const STANDING = {
+            behind:  { cls: 'bad',  icon: 'fa-circle-exclamation', label: 'Behind',         rank: 0 },
+            due:     { cls: 'warn', icon: 'fa-clock',              label: 'Due this month', rank: 1 },
+            current: { cls: 'good', icon: 'fa-circle-check',       label: 'Up to date',     rank: 2 },
+            ahead:   { cls: 'good', icon: 'fa-forward',            label: 'Paid ahead',     rank: 3 }
+        };
+        const PAYOUT = {
+            received:    { cls: 'good',  icon: 'fa-circle-check',        label: 'Received' },
+            today:       { cls: 'gold',  icon: 'fa-coins',               label: 'Payout today' },
+            current:     { cls: 'info',  icon: 'fa-hand-holding-dollar', label: 'This month' },
+            upcoming:    { cls: 'muted', icon: 'fa-hourglass-half',      label: 'Upcoming' },
+            pending:     { cls: 'warn',  icon: 'fa-triangle-exclamation', label: 'Not yet released' },
+            unscheduled: { cls: 'muted', icon: 'fa-circle-question',     label: 'Not scheduled' }
+        };
+        const AT_RISK = { cls: 'bad', icon: 'fa-triangle-exclamation', label: 'Already received payout' };
+
+        function chip(s) {
+            return `<span class="chip ${s.cls}">${s.icon ? `<i class="fa-solid ${s.icon}" aria-hidden="true"></i>` : ''}${esc(s.label)}</span>`;
         }
-        
-        // Parse CSV value properly
-        function parseCSVValue(value) {
-            if (!value || value === '') return 0;
-            
-            let cleanValue = value.toString().replace(/[₱$,]/g, '').trim();
-            const parsed = parseFloat(cleanValue);
-            
-            return isNaN(parsed) ? 0 : parsed;
-        }
-        
-        // Login function
-        function login(username, password) {
-            if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-                document.getElementById('login-page').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                document.getElementById('login-error').classList.remove('show');
-                
-                document.getElementById('current-month').textContent = CURRENT_MONTH;
-                loadDataFromSheets();
-                
-                setInterval(updateCountdown, 1000);
-                
-                return true;
-            } else {
-                document.getElementById('login-error').classList.add('show');
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-                document.getElementById('username').focus();
-                return false;
-            }
-        }
-        
-        // Logout function
-        function logout() {
-            document.getElementById('dashboard').style.display = 'none';
-            document.getElementById('login-page').style.display = 'flex';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('username').focus();
-        }
-        
-        // Wait for DOM to load
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('login-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                
-                login(username, password);
-            });
-            
-            document.getElementById('logout-btn').addEventListener('click', logout);
-            
-            document.getElementById('load-data-btn').addEventListener('click', loadDataFromSheets);
-            document.getElementById('show-iframe-btn').addEventListener('click', showIframeView);
-            document.getElementById('show-charts-btn').addEventListener('click', showChartsView);
-            document.getElementById('manual-refresh-btn').addEventListener('click', function() {
-                refreshCountdown = 300;
-                loadDataFromSheets();
-            });
-            
-            document.getElementById('username').focus();
-        });
-        
-        // Function to load data from Google Sheets CSV
-        function loadDataFromSheets() {
-            document.getElementById('table-loading').style.display = 'flex';
-            document.getElementById('savings-table').innerHTML = '';
-            
-            setActiveButton('load-data-btn');
-            showChartsView();
-            
-            Papa.parse(CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    processSheetData(results.data);
-                    updateLastUpdatedTime();
-                },
-                error: function(error) {
-                    console.error('Error loading Google Sheets data:', error);
-                    document.getElementById('table-loading').innerHTML = 
-                        '<i class="fas fa-exclamation-triangle"></i> Error loading data from Google Sheets. Using sample data instead.';
-                    
-                    setTimeout(() => {
-                        useSampleData();
-                        updateLastUpdatedTime();
-                    }, 1000);
+
+        /* =====================================================================
+           CSV parsing
+           ===================================================================== */
+        function parseCSV(text) {
+            const rows = [];
+            let row = [], field = '', inQuotes = false;
+            text = String(text).replace(/^﻿/, '');
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; }
+                    } else {
+                        field += c;
+                    }
+                } else if (c === '"') {
+                    inQuotes = true;
+                } else if (c === ',') {
+                    row.push(field); field = '';
+                } else if (c === '\n') {
+                    row.push(field); rows.push(row); row = []; field = '';
+                } else if (c !== '\r') {
+                    field += c;
                 }
-            });
-        }
-        
-        // Process the Google Sheets data
-        function processSheetData(data) {
-            const members = [];
-            let monthlyTotals = new Array(12).fill(0);
-            
-            data.forEach(row => {
-                const name = row['Name'] || row['name'] || row['NAME'] || Object.values(row)[0] || 'Unknown';
-                
-                const months = [];
-                let total = 0;
-                
-                MONTHS.forEach((month, index) => {
-                    const monthValue = row[month] || row[month.toUpperCase()] || row[month.toLowerCase()] || 0;
-                    const value = parseCSVValue(monthValue);
-                    months.push(value);
-                    monthlyTotals[index] += value;
-                    total += value;
-                });
-                
-                const totalFromSheet = parseCSVValue(row['Total Savings'] || row['Total'] || row['TOTAL'] || row['Total Savings '] || 0);
-                
-                members.push({
-                    name: name,
-                    months: months,
-                    total: totalFromSheet || total
-                });
-            });
-            
-            updateDashboard(members, monthlyTotals);
-        }
-        
-        // Fallback to sample data (in Philippine Peso thousands)
-        function useSampleData() {
-            const sampleMembers = [
-                { name: "Maria Santos", months: [1250.50, 1350.75, 1450.25, 1550.00, 1650.50, 1750.75, 1850.25, 1950.00, 2050.50, 2150.75, 2250.25, 2350.00], total: 20655.50 },
-                { name: "Juan Dela Cruz", months: [1150.25, 1250.50, 1350.75, 1450.25, 1550.00, 1650.50, 1750.75, 1850.25, 1950.00, 2050.50, 2150.75, 2250.25], total: 19355.75 },
-                { name: "Ana Reyes", months: [1550.00, 1650.50, 1750.75, 1850.25, 1950.00, 2050.50, 2150.75, 2250.25, 2350.00, 2450.50, 2550.75, 2650.25], total: 24755.25 },
-                { name: "Pedro Bautista", months: [950.75, 1050.25, 1150.50, 1250.75, 1350.25, 1450.50, 1550.75, 1650.25, 1750.50, 1850.75, 1950.25, 2050.50], total: 16555.00 },
-                { name: "Sofia Lim", months: [2050.25, 2150.50, 2250.75, 2350.25, 2450.50, 2550.75, 2650.25, 2750.50, 2850.75, 2950.25, 3050.50, 3150.75], total: 30755.25 }
-            ];
-            
-            const monthlyTotals = MONTHS.map((month, index) => {
-                return sampleMembers.reduce((sum, member) => sum + member.months[index], 0);
-            });
-            
-            updateDashboard(sampleMembers, monthlyTotals);
-        }
-        
-        // Update the dashboard with data
-        function updateDashboard(members, monthlyTotals) {
-            const totalSavings = members.reduce((sum, member) => sum + member.total, 0);
-            
-            const topSaver = members.reduce((prev, current) => 
-                (prev.total > current.total) ? prev : current
-            );
-            
-            document.getElementById('total-savings').textContent = formatCurrencyThousands(totalSavings);
-            document.getElementById('total-members').textContent = members.length;
-            document.getElementById('top-saver').textContent = topSaver.name;
-            
-            createMonthlyChart(monthlyTotals);
-            createContributionsChart(members);
-            createSavingsTable(members, monthlyTotals);
-            
-            document.getElementById('table-loading').style.display = 'none';
-        }
-        
-        // Create monthly savings chart
-        function createMonthlyChart(monthlyTotals) {
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
-            
-            if (monthlyChart) {
-                monthlyChart.destroy();
             }
-            
-            monthlyChart = new Chart(ctx, {
+            if (field !== '' || row.length) { row.push(field); rows.push(row); }
+            return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
+        }
+
+        const norm = (h) => String(h == null ? '' : h).trim().toLowerCase().replace(/\s+/g, ' ');
+
+        // "Jan", "January", "Sept", "Jan 2026", "Enero", "Hunyo" -> month index; else -1
+        const MONTHS_TL = ['enero', 'pebrero', 'marso', 'abril', 'mayo', 'hunyo',
+                           'hulyo', 'agosto', 'setyembre', 'oktubre', 'nobyembre', 'disyembre'];
+        function monthFromText(text) {
+            const word = (norm(text).match(/^[a-z]+/) || [''])[0];
+            if (word.length < 3) return -1;
+            const en = MONTHS.findIndex(m => m.toLowerCase().startsWith(word));
+            return en >= 0 ? en : MONTHS_TL.findIndex(m => m.startsWith(word));
+        }
+
+        function parseAmount(value) {
+            if (value == null) return 0;
+            let s = String(value).trim();
+            if (!s || /^[-–—]$/.test(s)) return 0;
+            const negative = /^\(.*\)$/.test(s) || /^-/.test(s);
+            s = s.replace(/[()]/g, '').replace(/php|₱|\$|,|\s/gi, '').replace(/^-/, '').replace(/^p(?=[\d.])/i, '');
+            const n = parseFloat(s);
+            return Number.isFinite(n) ? (negative ? -n : n) : 0;
+        }
+
+        function parsePayout(value) {
+            const s = String(value == null ? '' : value).trim();
+            if (!s) return null;
+            let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (m) return validPayout(+m[2] - 1, +m[3]);
+            m = s.match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
+            if (m) return validPayout(+m[1] - 1, +m[2]);
+            if (/^\d{1,2}$/.test(s)) return validPayout(+s - 1, null);
+            const words = s.toLowerCase().match(/[a-z]+/g) || [];
+            for (const w of words) {
+                const k = monthFromText(w);
+                if (k >= 0) {
+                    const day = s.match(/\b(\d{1,2})\b/);
+                    return validPayout(k, day ? +day[1] : null);
+                }
+            }
+            return null;
+        }
+        function validPayout(month, day) {
+            if (!(month >= 0 && month <= 11)) return null;
+            return { month, day: day >= 1 && day <= 31 ? day : null };
+        }
+
+        function parseYesNo(value) {
+            const s = norm(value);
+            if (!s) return null;
+            if (/^(y|yes|oo|true|received|released|done|paid|claimed|x|✓|✔|☑)$/.test(s)) return true;
+            if (/^(n|no|hindi|false|pending|not yet|unpaid|-)$/.test(s)) return false;
+            const n = parseAmount(s);
+            return n > 0 ? true : null;
+        }
+
+        const SKIP_ROW = /^((grand|sub|monthly)\s*-?\s*)?totals?\b|^(average|collected|expected|balance|remarks?|notes?|prepared|checked|approved)\b|:/i;
+
+        function detectColumns(header) {
+            const used = new Set();
+            const pick = (re) => {
+                const i = header.findIndex((h, idx) => !used.has(idx) && re.test(norm(h)));
+                if (i >= 0) used.add(i);
+                return i >= 0 ? i : null;
+            };
+            const cols = {};
+            cols.name = pick(/^(name|names|member|members|member name|member's name|full name|employee|employee name|pangalan)$/);
+            cols.payout = pick(/^(payout|payout month|payout date|payout schedule|release|release month|release date|receive|receive month|receiving month|month to receive|turn|turn month|bunot|schedule)$/);
+            cols.order = pick(/^(#|no\.?|order|payout order|rotation|rotation order|rotation #|slot|slot #|slot no\.?|turn #|turn no\.?|sequence|seq|bunot #|bunot no\.?)$/);
+            cols.contribution = pick(/^(contribution|monthly contribution|contribution per month|share|monthly share|amount|hulog|monthly hulog|monthly due|due per month)$/);
+            cols.received = pick(/^(received|payout received|released|payout released|paid out|claimed|nakuha)$/);
+            cols.total = pick(/^(total|totals|total savings|total contribution|total contributions|total paid|grand total)$/);
+            cols.months = MONTHS.map(() => []);
+            header.forEach((h, idx) => {
+                if (used.has(idx)) return;
+                const k = monthFromText(h);
+                if (k >= 0) { cols.months[k].push(idx); used.add(idx); }
+            });
+            if (cols.name == null) {
+                const firstFree = header.findIndex((_, idx) => !used.has(idx));
+                cols.name = firstFree >= 0 ? firstFree : 0;
+            }
+            return cols;
+        }
+
+        function parseSheet(rows) {
+            const headerIdx = rows.slice(0, 15).findIndex(r => r.filter(c => monthFromText(c) >= 0).length >= 3);
+            if (headerIdx < 0) {
+                throw new Error("Couldn't find the month columns (January–December) in the sheet.");
+            }
+            const header = rows[headerIdx].map(c => String(c == null ? '' : c));
+            const cols = detectColumns(header);
+            const seen = new Map();
+            const members = [];
+            rows.slice(headerIdx + 1).forEach(r => {
+                const rawName = String(r[cols.name] == null ? '' : r[cols.name]).trim();
+                if (!rawName || SKIP_ROW.test(rawName)) return;
+                const n = (seen.get(rawName) || 0) + 1;
+                seen.set(rawName, n);
+                const name = n > 1 ? `${rawName} (${n})` : rawName;
+                const orderVal = cols.order != null ? parseInt(String(r[cols.order]).replace(/[^\d]/g, ''), 10) : NaN;
+                members.push({
+                    id: name,
+                    name,
+                    row: members.length,
+                    months: cols.months.map(idxs => r2(idxs.reduce((s, i) => s + parseAmount(r[i]), 0))),
+                    sheetTotal: cols.total != null ? parseAmount(r[cols.total]) : null,
+                    sheetPayout: cols.payout != null ? parsePayout(r[cols.payout]) : null,
+                    sheetOrder: Number.isFinite(orderVal) ? orderVal : null,
+                    sheetContribution: cols.contribution != null ? parseAmount(r[cols.contribution]) : null,
+                    sheetReceived: cols.received != null ? parseYesNo(r[cols.received]) : null
+                });
+            });
+            if (!members.length) throw new Error('The sheet has no member rows under the header.');
+            const found = [];
+            found.push(`Name (“${header[cols.name] || 'column 1'}”)`);
+            found.push(`${cols.months.filter(c => c.length).length} month columns`);
+            ['total:Total', 'payout:Payout Month', 'order:Order', 'contribution:Contribution', 'received:Received'].forEach(pair => {
+                const [key, label] = pair.split(':');
+                if (cols[key] != null) found.push(`${label} (“${header[cols[key]]}”)`);
+            });
+            return { members, detected: found };
+        }
+
+        /* =====================================================================
+           Sample data (only used when the sheet can't be reached)
+           ===================================================================== */
+        function sampleData(settings) {
+            const year = settings.cycleYear || CONFIG.cycleYear;
+            const now = new Date();
+            const nowIdx = now.getFullYear() < year ? -1 : now.getFullYear() > year ? 12 : now.getMonth();
+            const C = 2000;
+            const names = ['Maria Santos', 'Juan Dela Cruz', 'Ana Reyes', 'Pedro Bautista', 'Sofia Lim', 'Carlo Mendoza',
+                           'Bea Villanueva', 'Miguel Garcia', 'Liza Ramos', 'Paolo Navarro', 'Grace Tan', 'Ramon Aquino'];
+            const members = names.map((name, i) => ({
+                id: name, name, row: i,
+                months: MONTHS.map((_, k) => {
+                    if (k > nowIdx) return (i === 4 && k === nowIdx + 1) ? C : 0;  // paid a month ahead
+                    if (k === nowIdx) return i % 3 === 0 ? 0 : C;                // some still to pay this month
+                    if (i === 3 && k >= nowIdx - 2) return 0;                     // missed two months
+                    if (i === 7 && k === nowIdx - 1) return C / 2;                // partial payment
+                    return C;
+                }),
+                sheetTotal: null, sheetPayout: null, sheetOrder: null, sheetContribution: null, sheetReceived: null
+            }));
+            return { members, detected: ['Sample data'] };
+        }
+
+        /* =====================================================================
+           Settings
+           ===================================================================== */
+        const DEFAULT_SETTINGS = { cycleYear: null, contribution: null, startMonth: null, payoutDay: null, order: null };
+        function loadSettings() {
+            try {
+                const parsed = JSON.parse(local.get(KEYS.settings) || '{}');
+                return Object.assign({}, DEFAULT_SETTINGS, parsed && typeof parsed === 'object' ? parsed : {});
+            } catch (e) {
+                return Object.assign({}, DEFAULT_SETTINGS);
+            }
+        }
+        function saveSettings() { local.set(KEYS.settings, JSON.stringify(state.settings)); }
+
+        /* =====================================================================
+           The rotating-savings model
+           ===================================================================== */
+        function modeOf(values) {
+            const counts = new Map();
+            values.forEach(v => { const key = Math.round(v * 100); counts.set(key, (counts.get(key) || 0) + 1); });
+            let best = 0, bestCount = 0;
+            counts.forEach((count, key) => {
+                if (count > bestCount || (count === bestCount && key > best)) { best = key; bestCount = count; }
+            });
+            return best / 100;
+        }
+
+        function computeModel(rawMembers, settings, now) {
+            const year = settings.cycleYear || CONFIG.cycleYear;
+            const today = startOfDay(now);
+            const nowIdx = now.getFullYear() < year ? -1 : now.getFullYear() > year ? 12 : now.getMonth();
+            const defaultDay = settings.payoutDay || CONFIG.defaultPayoutDay;
+
+            // Expected monthly contribution: sheet column > settings > most common amount paid
+            const autoContribution = modeOf(rawMembers.flatMap(m => m.months).filter(v => v > 0));
+            const members = rawMembers.map(m => Object.assign({}, m, {
+                expected: m.sheetContribution > 0 ? m.sheetContribution
+                        : settings.contribution > 0 ? settings.contribution
+                        : autoContribution
+            }));
+
+            // Cycle start: setting > earliest payment or payout month in the sheet
+            const firstPaid = MONTHS.findIndex((_, k) => members.some(m => m.months[k] > 0));
+            const sheetMonths = members.map(m => m.sheetPayout && m.sheetPayout.month).filter(Number.isInteger);
+            const startCandidates = (firstPaid >= 0 ? [firstPaid] : []).concat(sheetMonths);
+            const autoStart = startCandidates.length ? Math.min.apply(null, startCandidates) : 0;
+            const start = Number.isInteger(settings.startMonth) ? settings.startMonth : autoStart;
+
+            // Rotation order: custom (this browser) > sheet payout month > sheet order > row order
+            const N = members.length;
+            const L = Math.max(1, Math.min(N, 12 - start));
+            const assignSequential = (list) => list.forEach((m, i) => {
+                m.payoutMonth = start + Math.floor((i * L) / N);
+                m.payoutDayOverride = null;
+            });
+            const custom = Array.isArray(settings.order) ? settings.order : [];
+            const pos = new Map(custom.map((id, i) => [id, i]));
+            const rank = (m) => (pos.has(m.id) ? pos.get(m.id) : 1e6 + m.row);
+            let ordered, rotationSource;
+            if (custom.length && members.some(m => pos.has(m.id))) {
+                ordered = members.slice().sort((a, b) => rank(a) - rank(b));
+                assignSequential(ordered);
+                rotationSource = 'custom';
+            } else if (members.some(m => m.sheetPayout)) {
+                ordered = members.slice().sort((a, b) =>
+                    ((a.sheetPayout ? a.sheetPayout.month : 99) - (b.sheetPayout ? b.sheetPayout.month : 99)) ||
+                    ((a.sheetOrder == null ? 1e6 : a.sheetOrder) - (b.sheetOrder == null ? 1e6 : b.sheetOrder)) ||
+                    (a.row - b.row));
+                ordered.forEach(m => {
+                    m.payoutMonth = m.sheetPayout ? m.sheetPayout.month : null;
+                    m.payoutDayOverride = m.sheetPayout ? m.sheetPayout.day : null;
+                });
+                rotationSource = 'sheet-month';
+            } else if (members.some(m => m.sheetOrder != null)) {
+                ordered = members.slice().sort((a, b) =>
+                    ((a.sheetOrder == null ? 1e6 : a.sheetOrder) - (b.sheetOrder == null ? 1e6 : b.sheetOrder)) || (a.row - b.row));
+                assignSequential(ordered);
+                rotationSource = 'sheet-order';
+            } else {
+                ordered = members.slice();
+                assignSequential(ordered);
+                rotationSource = 'rows';
+            }
+            ordered.forEach((m, i) => { m.turn = i + 1; });
+
+            // Cycle range
+            const scheduled = ordered.map(m => m.payoutMonth).filter(Number.isInteger);
+            const end = scheduled.length ? Math.max.apply(null, [start].concat(scheduled)) : Math.min(11, start + L - 1);
+            const inCycle = (k) => k >= start && k <= end;
+            const cycleLength = end - start + 1;
+            const cycleMonthsBefore = (idx) => Math.max(0, Math.min(idx, end + 1) - start);
+
+            const potPerRound = sum(members, m => m.expected);
+            const recipientsBy = MONTHS.map(() => []);
+            ordered.forEach(m => { if (Number.isInteger(m.payoutMonth)) recipientsBy[m.payoutMonth].push(m); });
+
+            // Per member
+            ordered.forEach(m => {
+                const monthSum = sum(m.months);
+                m.paid = monthSum !== 0 ? monthSum : (m.sheetTotal > 0 ? m.sheetTotal : 0);
+                m.cells = m.months.map((v, k) => {
+                    const exp = inCycle(k) ? m.expected : 0;
+                    let s;
+                    if (!inCycle(k)) s = v > 0 ? 'extra' : 'na';
+                    else if (exp <= 0) s = v > 0 ? 'paid' : 'na';
+                    else if (v >= exp - 0.005) s = 'paid';
+                    else if (v > 0) s = 'partial';
+                    else if (k < nowIdx) s = 'missed';
+                    else if (k === nowIdx) s = 'due';
+                    else s = 'upcoming';
+                    return { k, v, exp, s };
+                });
+                m.dueBefore = r2(m.expected * cycleMonthsBefore(nowIdx));
+                m.dueToDate = r2(m.expected * cycleMonthsBefore(nowIdx + 1));
+                m.cycleTotal = r2(m.expected * cycleLength);
+                m.overdue = r2(Math.max(0, m.dueBefore - m.paid));
+                m.dueNow = r2(Math.max(0, m.dueToDate - m.paid) - m.overdue);
+                m.balance = r2(m.paid - m.dueToDate);
+                m.remaining = r2(Math.max(0, m.cycleTotal - m.paid));
+                m.missedMonths = m.cells.filter(c => c.s === 'missed' || c.s === 'partial').length;
+                m.standing = m.overdue > 0.004 ? 'behind' : m.dueNow > 0.004 ? 'due' : m.balance > 0.004 ? 'ahead' : 'current';
+
+                if (Number.isInteger(m.payoutMonth)) {
+                    const k = m.payoutMonth;
+                    m.payoutDate = new Date(year, k, Math.min(m.payoutDayOverride || defaultDay, daysInMonth(year, k)));
+                    m.payoutAmount = r2(potPerRound / (recipientsBy[k].length || 1));
+                    const diff = daysBetween(today, m.payoutDate);
+                    const sameMonth = k === nowIdx;
+                    if (m.sheetReceived === true) m.payoutState = 'received';
+                    else if (diff < 0) m.payoutState = m.sheetReceived === false ? 'pending' : 'received';
+                    else if (diff === 0) m.payoutState = 'today';
+                    else m.payoutState = sameMonth ? 'current' : 'upcoming';
+                    m.payoutDays = diff;
+                } else {
+                    m.payoutDate = null;
+                    m.payoutAmount = 0;
+                    m.payoutState = 'unscheduled';
+                    m.payoutDays = null;
+                }
+                m.received = m.payoutState === 'received';
+                m.net = r2(m.paid - (m.received ? m.payoutAmount : 0));
+                m.atRisk = m.received && m.overdue > 0;
+            });
+
+            // Per month (round)
+            const months = MONTHS.map((name, k) => {
+                const collected = sum(ordered, m => m.months[k]);
+                const expected = inCycle(k) ? potPerRound : 0;
+                const paid = ordered.filter(m => m.cells[k].s === 'paid');
+                const unpaid = inCycle(k)
+                    ? ordered.filter(m => m.cells[k].s !== 'paid').map(m => ({ m, s: m.cells[k].s, owed: r2(Math.max(0, m.cells[k].exp - m.cells[k].v)) }))
+                    : [];
+                const recipients = recipientsBy[k];
+                const fallbackDate = new Date(year, k, Math.min(defaultDay, daysInMonth(year, k)));
+                return {
+                    k, name, short: MON[k], inCycle: inCycle(k), round: inCycle(k) ? k - start + 1 : null,
+                    collected, expected, paid, unpaid, recipients,
+                    date: recipients.length ? recipients[0].payoutDate : fallbackDate,
+                    isPast: k < nowIdx, isCurrent: k === nowIdx
+                };
+            });
+
+            const phase = nowIdx < start ? 'upcoming' : nowIdx > end ? 'complete' : 'active';
+            const released = ordered.filter(m => m.received);
+            const shares = Array.from(new Set(ordered.map(m => m.expected)));
+            const thisMonth = phase === 'active' ? months[nowIdx] : null;
+
+            return {
+                year, now, today, nowIdx, start, end, cycleLength, inCycle, phase,
+                members: ordered,
+                byId: new Map(ordered.map(m => [m.id, m])),
+                months, potPerRound, autoContribution, autoStart, rotationSource, shares,
+                defaultRound: phase === 'active' ? nowIdx : phase === 'upcoming' ? start : end,
+                currentRound: phase === 'active' ? nowIdx - start + 1 : phase === 'complete' ? cycleLength : 0,
+                upcoming: ordered.filter(m => ['today', 'current', 'upcoming'].includes(m.payoutState))
+                                 .sort((a, b) => a.payoutDate - b.payoutDate),
+                attention: ordered.filter(m => m.overdue > 0)
+                                  .sort((a, b) => (b.atRisk - a.atRisk) || (b.overdue - a.overdue)),
+                pendingPayouts: ordered.filter(m => m.payoutState === 'pending'),
+                unscheduled: ordered.filter(m => m.payoutState === 'unscheduled'),
+                kpi: {
+                    collected: sum(ordered, m => m.paid),
+                    expectedToDate: sum(ordered, m => m.dueToDate),
+                    overdue: sum(ordered, m => m.overdue),
+                    behind: ordered.filter(m => m.standing === 'behind').length,
+                    atRisk: ordered.filter(m => m.atRisk).length,
+                    releasedCount: released.length,
+                    releasedAmount: sum(released, m => m.payoutAmount),
+                    thisMonth
+                }
+            };
+        }
+
+        /* =====================================================================
+           App state
+           ===================================================================== */
+        const state = {
+            settings: loadSettings(),
+            data: null,              // { members, detected }
+            source: null,            // 'sheet' | 'sample'
+            error: null,
+            lastSynced: null,
+            loading: false,
+            countdown: CONFIG.refreshSeconds,
+            model: null,
+            view: {
+                tab: 'overview',
+                round: null,
+                matrixQuery: '',
+                memberQuery: '',
+                memberFilter: 'all',
+                sort: { key: 'turn', dir: 1 }
+            }
+        };
+        const charts = {};
+        let timer = null;
+        let settingsDraft = null;
+
+        /* =====================================================================
+           Data loading
+           ===================================================================== */
+        async function fetchSheetText() {
+            const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const t = ctrl ? setTimeout(() => ctrl.abort(), CONFIG.requestTimeoutMs) : null;
+            try {
+                const res = await fetch(CONFIG.sheetCsvUrl, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+                if (!res.ok) throw new Error(`Google Sheets responded with HTTP ${res.status}.`);
+                const text = await res.text();
+                if (/^\s*<(!doctype|html)/i.test(text)) {
+                    throw new Error('The sheet link returned a web page instead of CSV. Check that the sheet is published to the web as CSV.');
+                }
+                return text;
+            } finally {
+                if (t) clearTimeout(t);
+            }
+        }
+
+        function friendlyError(err) {
+            if (!err) return 'Unknown error';
+            if (err.name === 'AbortError') return 'The request timed out.';
+            if (err instanceof TypeError) return 'Could not connect to Google Sheets. You may be offline, or the request was blocked.';
+            return err.message || String(err);
+        }
+
+        async function loadData(opts) {
+            const manual = !!(opts && opts.manual);
+            if (state.loading) return;
+            state.loading = true;
+            state.countdown = CONFIG.refreshSeconds;
+            document.body.classList.add('is-refreshing');
+            renderSync();
+            try {
+                const text = await fetchSheetText();
+                state.data = parseSheet(parseCSV(text));
+                state.source = 'sheet';
+                state.error = null;
+                state.lastSynced = new Date();
+                if (manual) toast('Data refreshed from Google Sheets');
+            } catch (err) {
+                console.error('Could not load the Google Sheet:', err);
+                state.error = friendlyError(err);
+                if (state.source !== 'sheet') {
+                    state.data = sampleData(state.settings);
+                    state.source = 'sample';
+                }
+                if (manual) toast('Could not reach Google Sheets');
+            } finally {
+                state.loading = false;
+                document.body.classList.remove('is-refreshing');
+                renderAll();
+            }
+        }
+
+        function tick() {
+            if (document.hidden || state.loading) return;
+            state.countdown -= 1;
+            if (state.countdown <= 0) loadData();
+            else renderSync();
+        }
+        function startTimer() { if (!timer) timer = setInterval(tick, 1000); }
+        function stopTimer() { clearInterval(timer); timer = null; }
+
+        /* =====================================================================
+           Rendering
+           ===================================================================== */
+        function renderAll() {
+            if (!state.data) return;
+            const M = state.model = computeModel(state.data.members, state.settings, new Date());
+            if (!Number.isInteger(state.view.round) || state.view.round < M.start || state.view.round > M.end) {
+                state.view.round = M.defaultRound;
+            }
+            $('#brand-year').textContent = M.year;
+            $('#footer-year').textContent = M.year;
+            document.title = `HR RSA Savings Dashboard ${M.year}`;
+            const badge = $('#behind-badge');
+            badge.hidden = !M.kpi.behind;
+            badge.textContent = M.kpi.behind;
+            badge.title = `${M.kpi.behind} member(s) behind`;
+            renderBanner();
+            renderSync();
+            renderKpis();
+            renderRound();
+            renderUpcoming();
+            renderAttention();
+            renderMatrix();
+            renderSchedule();
+            renderLedger();
+            renderCharts();
+        }
+
+        function renderSync() {
+            const el = $('#sync');
+            const text = $('#sync-text');
+            el.classList.toggle('is-loading', state.loading);
+            el.classList.toggle('is-sample', state.source === 'sample');
+            el.classList.toggle('is-error', state.source === 'sheet' && !!state.error);
+            $('#refresh-btn').classList.toggle('is-spinning', state.loading);
+            const mm = Math.floor(state.countdown / 60);
+            const ss = String(state.countdown % 60).padStart(2, '0');
+            if (state.loading) text.textContent = 'Syncing…';
+            else if (state.source === 'sample') text.textContent = `Sample data · retry in ${mm}:${ss}`;
+            else if (state.error) text.textContent = `Sync failed · retry in ${mm}:${ss}`;
+            else if (state.lastSynced) text.textContent = `Synced ${fmtTime(state.lastSynced)} · next ${mm}:${ss}`;
+            else text.textContent = 'Connecting…';
+            $('#footer-source').textContent = state.source === 'sample' ? 'Sample data' : 'Live from Google Sheets';
+        }
+
+        function renderBanner() {
+            const el = $('#banner');
+            if (state.source === 'sample') {
+                el.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                    <div class="banner-text"><strong>Showing sample data. The names and amounts below are examples only.</strong>
+                    The Google Sheet couldn't be loaded: ${esc(state.error)}</div>
+                    <button class="btn btn-sm" data-action="refresh"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Try again</button>`;
+                el.hidden = false;
+            } else if (state.error) {
+                el.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                    <div class="banner-text"><strong>Couldn't refresh.</strong> ${esc(state.error)}
+                    Showing data from the last successful sync${state.lastSynced ? ` at ${esc(fmtTime(state.lastSynced))}` : ''}.</div>
+                    <button class="btn btn-sm" data-action="refresh"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Try again</button>`;
+                el.hidden = false;
+            } else {
+                el.hidden = true;
+                el.innerHTML = '';
+            }
+        }
+
+        function renderKpis() {
+            const M = state.model, k = M.kpi;
+            const rate = pct(k.collected, k.expectedToDate);
+            const tm = k.thisMonth;
+            const uniformShare = M.shares.length === 1;
+            const progressLabel = M.phase === 'active' ? `Round ${M.currentRound} of ${M.cycleLength}`
+                : M.phase === 'upcoming' ? `Starts ${MONTHS[M.start]}` : 'Cycle complete';
+            const progressPct = Math.round((M.currentRound / M.cycleLength) * 100);
+            $('#kpis').innerHTML = `
+                <article class="card kpi kpi-hero">
+                    <div class="kpi-label"><i class="fa-solid fa-piggy-bank" aria-hidden="true"></i> Total collected</div>
+                    <div class="kpi-value">${peso(k.collected)}</div>
+                    <div class="kpi-sub">${k.expectedToDate > 0 ? `of ${peso(k.expectedToDate)} due so far (${MONTHS[M.start]}–${MONTHS[clamp(M.nowIdx, M.start, M.end)]})` : 'No contributions are due yet'}</div>
+                    <div class="meter lg" role="progressbar" aria-label="Collection rate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100, rate)}"><span style="width:${Math.min(100, rate)}%"></span></div>
+                    <div class="kpi-foot">
+                        <span><strong>${k.expectedToDate > 0 ? rate + '%' : '—'}</strong> collection rate</span>
+                        ${tm ? `<span>${esc(tm.name)}: <strong>${peso(tm.collected)}</strong> of ${peso(tm.expected)} · ${tm.paid.length}/${M.members.length} paid</span>` : ''}
+                    </div>
+                </article>
+                <article class="card kpi">
+                    <div class="kpi-label"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> Pot per round</div>
+                    <div class="kpi-value">${peso(M.potPerRound)}</div>
+                    <div class="kpi-sub">${M.members.length} members${uniformShare ? ` × ${peso(M.shares[0])}/month` : ' · mixed shares'}</div>
+                </article>
+                <article class="card kpi">
+                    <div class="kpi-label"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Cycle progress</div>
+                    <div class="kpi-value">${progressLabel}</div>
+                    <div class="meter" role="progressbar" aria-label="Cycle progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progressPct}"><span style="width:${progressPct}%"></span></div>
+                    <div class="kpi-sub">${MONTHS[M.start]} – ${MONTHS[M.end]} ${M.year}</div>
+                </article>
+                <article class="card kpi">
+                    <div class="kpi-label"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Overdue contributions</div>
+                    <div class="kpi-value">${peso(k.overdue)}</div>
+                    <div class="kpi-sub">${k.behind
+                        ? `${chip({ cls: 'bad', icon: 'fa-circle-exclamation', label: `${k.behind} member${k.behind > 1 ? 's' : ''} behind` })}${k.atRisk ? ` ${chip({ cls: 'bad', icon: 'fa-triangle-exclamation', label: `${k.atRisk} already got paid out` })}` : ''}`
+                        : chip({ cls: 'good', icon: 'fa-circle-check', label: 'Everyone is up to date' })}</div>
+                </article>
+                <article class="card kpi">
+                    <div class="kpi-label"><i class="fa-solid fa-hand-holding-dollar" aria-hidden="true"></i> Payouts released</div>
+                    <div class="kpi-value">${k.releasedCount} of ${M.members.length}</div>
+                    <div class="kpi-sub">${peso(k.releasedAmount)} paid out so far</div>
+                </article>`;
+        }
+
+        function payoutWhen(m) {
+            if (!m.payoutDate) return 'Not scheduled';
+            if (m.payoutState === 'received') return `Released ${fmtDate(m.payoutDate)}`;
+            if (m.payoutState === 'pending') return `Was due ${fmtDate(m.payoutDate)}`;
+            return relDays(m.payoutDays).replace(/^./, c => c.toUpperCase());
+        }
+
+        function renderRound() {
+            const M = state.model;
+            const k = state.view.round;
+            const mo = M.months[k];
+            const tag = mo.isCurrent ? chip({ cls: 'info', icon: 'fa-circle-dot', label: 'Current round' })
+                : mo.isPast ? chip({ cls: 'muted', icon: 'fa-clock-rotate-left', label: 'Past round' })
+                : chip({ cls: 'muted', icon: 'fa-hourglass-half', label: 'Upcoming round' });
+            const rate = pct(mo.collected, mo.expected);
+            const recipients = mo.recipients.length
+                ? mo.recipients.map(r => `
+                    <div class="recipient">
+                        <span class="avatar lg gold" aria-hidden="true">${esc(initials(r.name))}</span>
+                        <div class="who-wrap">
+                            <div class="eyebrow">${mo.recipients.length > 1 ? 'Shares the pot' : 'Receives the pot'} · Turn #${r.turn}</div>
+                            <button class="member-link who" data-member="${esc(r.id)}">${esc(r.name)}</button>
+                            <div class="meta">${esc(fmtDateLong(r.payoutDate))} · ${esc(payoutWhen(r))}</div>
+                        </div>
+                        <div class="amount"><strong>${peso(r.payoutAmount)}</strong>${chip(PAYOUT[r.payoutState])}</div>
+                    </div>`).join('')
+                : `<div class="recipient"><i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                    <span>No one is scheduled to receive this round.</span>
+                    <button class="link-btn" data-action="edit-rotation">Set the rotation</button></div>`;
+            const pill = (x) => `<button class="name-pill" data-member="${esc(x.m.id)}" title="${esc(CELL[x.s].label)}">
+                    ${CELL[x.s].icon ? `<i class="fa-solid ${CELL[x.s].icon} ic-${x.s}" aria-hidden="true"></i>` : ''}${esc(x.m.name)}
+                    ${x.owed > 0 && x.s !== 'upcoming' ? `<span class="owed">${peso(x.owed)}</span>` : ''}<span class="sr-only">${esc(CELL[x.s].label)}</span></button>`;
+            const unpaidHtml = mo.unpaid.map(pill).join('');
+            const paidHtml = mo.paid.map(m => pill({ m, s: 'paid', owed: 0 })).join('');
+            const notStarted = k > M.nowIdx;
+            $('#round-card').innerHTML = `
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Round ${mo.round} of ${M.cycleLength} · ${esc(mo.name)} ${M.year}</h2>
+                        <div class="card-sub">Pot ${peso(mo.expected)} · payout on ${esc(fmtDate(mo.date))}</div>
+                    </div>
+                    <div class="chips round-nav">
+                        ${tag}
+                        <button class="btn btn-sm icon-btn" data-action="round-prev" ${k <= M.start ? 'disabled' : ''} aria-label="Previous round"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="btn btn-sm icon-btn" data-action="round-next" ${k >= M.end ? 'disabled' : ''} aria-label="Next round"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                ${recipients}
+                <div class="progress-row">
+                    <span><strong>${peso(mo.collected)}</strong> of ${peso(mo.expected)} collected${notStarted ? ' · collection not open yet' : ''}</span>
+                    <span><strong>${mo.paid.length}</strong> of ${M.members.length} paid · ${rate}%</span>
+                </div>
+                <div class="meter lg" role="progressbar" aria-label="Round collection" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100, rate)}"><span style="width:${Math.min(100, rate)}%"></span></div>
+                <div class="people">
+                    <div>
+                        <h3><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ${mo.isPast ? 'Unpaid' : 'Not yet paid'} (${mo.unpaid.length})</h3>
+                        <div class="name-list">${unpaidHtml || '<span class="muted-text">Everyone has paid this round.</span>'}</div>
+                    </div>
+                    <div>
+                        <h3><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Paid (${mo.paid.length})</h3>
+                        <div class="name-list">${paidHtml || '<span class="muted-text">No payments recorded yet.</span>'}</div>
+                    </div>
+                </div>`;
+        }
+
+        function renderUpcoming() {
+            const M = state.model;
+            const list = M.upcoming.slice(0, 4);
+            $('#upcoming-list').innerHTML = list.length
+                ? list.map(m => `<li><button class="list-row" data-member="${esc(m.id)}">
+                        <span class="date-badge" aria-hidden="true"><span class="m">${MON[m.payoutDate.getMonth()]}</span><span class="d">${m.payoutDate.getDate()}</span></span>
+                        <span class="main"><span class="title">${esc(m.name)}</span><span class="meta">Turn #${m.turn} · ${esc(relDays(m.payoutDays))}</span></span>
+                        <span class="right">${peso(m.payoutAmount)}</span>
+                    </button></li>`).join('')
+                : `<li class="empty"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>All payouts for this cycle have been released.</li>`;
+        }
+
+        function renderAttention() {
+            const M = state.model;
+            const rows = [];
+            M.pendingPayouts.forEach(m => rows.push(`<li><button class="list-row" data-member="${esc(m.id)}">
+                    <span class="avatar" aria-hidden="true">${esc(initials(m.name))}</span>
+                    <span class="main"><span class="title">${esc(m.name)}</span><span class="meta">Payout of ${peso(m.payoutAmount)} was due ${esc(fmtDate(m.payoutDate))}</span></span>
+                    <span class="right">${chip(PAYOUT.pending)}</span></button></li>`));
+            M.attention.slice(0, 6).forEach(m => rows.push(`<li><button class="list-row" data-member="${esc(m.id)}">
+                    <span class="avatar" aria-hidden="true">${esc(initials(m.name))}</span>
+                    <span class="main"><span class="title">${esc(m.name)}</span><span class="meta">${m.missedMonths} missed/short month${m.missedMonths === 1 ? '' : 's'}</span></span>
+                    <span class="right">−${peso(m.overdue)}${m.atRisk ? chip(AT_RISK) : chip(STANDING.behind)}</span></button></li>`));
+            if (M.attention.length > 6) {
+                rows.push(`<li><button class="list-row" data-action="show-behind"><span class="main"><span class="meta">+ ${M.attention.length - 6} more behind on contributions</span></span></button></li>`);
+            }
+            $('#attention-list').innerHTML = rows.join('') ||
+                `<li class="empty"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Everyone is up to date. Nothing needs attention.</li>`;
+        }
+
+        function cellHtml(m, c) {
+            const isPayout = m.payoutMonth === c.k;
+            const meta = CELL[c.s];
+            const detail = [`${m.name} · ${MONTHS[c.k]}`, meta.label];
+            if (c.v) detail.push(`Paid ${peso(c.v)}${c.exp && c.v < c.exp ? ` of ${peso(c.exp)}` : ''}`);
+            else if (c.exp && (c.s === 'missed' || c.s === 'due')) detail.push(`${peso(c.exp)} due`);
+            if (isPayout) detail.push(`Payout month · ${peso(m.payoutAmount)}`);
+            const shown = c.v ? num(c.v) : (c.s === 'missed' || c.s === 'due' ? '0' : '');
+            return `<td class="cell s-${c.s}${isPayout ? ' is-payout' : ''}" title="${esc(detail.join(' · '))}">
+                <span class="c">${isPayout ? '<i class="fa-solid fa-coins payout-ic" aria-hidden="true"></i>' : ''}${shown ? `<span>${shown}</span>` : '<span class="dash" aria-hidden="true">–</span>'}<i class="fa-solid ${meta.icon || 'fa-minus'} st" aria-hidden="true" ${meta.icon ? '' : 'style="visibility:hidden"'}></i></span>
+                <span class="sr-only">${esc(meta.label)}${isPayout ? ', payout month' : ''}</span></td>`;
+        }
+
+        function renderMatrix() {
+            const M = state.model;
+            const q = state.view.matrixQuery.trim().toLowerCase();
+            const rows = M.members.filter(m => !q || m.name.toLowerCase().includes(q));
+            const outCls = (k) => (M.inCycle(k) ? '' : ' out');
+            const head = `<thead><tr>
+                    <th class="sticky-col" scope="col">Member</th>
+                    ${MONTHS.map((n, k) => `<th scope="col" class="num${k === M.nowIdx ? ' is-current' : ''}${outCls(k)}" title="${n} ${M.year}${M.inCycle(k) ? '' : ' (outside the cycle)'}">${MON[k]}</th>`).join('')}
+                    <th scope="col" class="num">Total paid</th>
+                    <th scope="col" class="num">Balance</th>
+                </tr></thead>`;
+            const body = rows.length ? rows.map(m => `<tr>
+                    <th scope="row" class="sticky-col"><button class="member-link" data-member="${esc(m.id)}"><span class="turn">#${m.turn}</span>${esc(m.name)}</button></th>
+                    ${m.cells.map(c => cellHtml(m, c)).join('')}
+                    <td class="num"><strong>${num(m.paid)}</strong></td>
+                    <td class="num${m.balance < 0 ? ' neg' : ''}">${signedPeso(m.balance)}</td>
+                </tr>`).join('')
+                : `<tr><td colspan="15" class="empty">No members match “${esc(q)}”.</td></tr>`;
+            const totalRate = pct(M.kpi.collected, M.kpi.expectedToDate);
+            const foot = `<tfoot>
+                <tr><th scope="row" class="sticky-col">Collected</th>
+                    ${M.months.map(mo => `<td class="num${outCls(mo.k)}">${mo.inCycle || mo.collected ? num(mo.collected) : '–'}</td>`).join('')}
+                    <td class="num">${num(M.kpi.collected)}</td><td></td></tr>
+                <tr><th scope="row" class="sticky-col">Expected pot</th>
+                    ${M.months.map(mo => `<td class="num${outCls(mo.k)}">${mo.inCycle ? num(mo.expected) : '–'}</td>`).join('')}
+                    <td class="num">${num(sum(M.months, mo => mo.expected))}</td><td></td></tr>
+                <tr><th scope="row" class="sticky-col">Collection rate</th>
+                    ${M.months.map(mo => `<td class="num${outCls(mo.k)}">${mo.inCycle && mo.k <= M.nowIdx ? pct(mo.collected, mo.expected) + '%' : '–'}</td>`).join('')}
+                    <td class="num">${M.kpi.expectedToDate ? totalRate + '%' : '–'}</td><td></td></tr>
+                </tfoot>`;
+            $('#matrix').innerHTML = `<caption class="sr-only">Monthly contributions by member, ${M.year}</caption>${head}<tbody>${body}</tbody>${foot}`;
+        }
+
+        function rotationSourceText(M) {
+            switch (M.rotationSource) {
+                case 'custom': return 'Using the custom rotation saved in this browser.';
+                case 'sheet-month': return "Using the Payout Month column from the Google Sheet.";
+                case 'sheet-order': return `Using the Order column from the sheet: one payout per month from ${MONTHS[M.start]}.`;
+                default: return `Following the row order of the sheet: one payout per month from ${MONTHS[M.start]}. Edit the rotation or add a “Payout Month” column to the sheet to change it.`;
+            }
+        }
+
+        function renderSchedule() {
+            const M = state.model;
+            $('#rotation-info').innerHTML = `<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                <span class="txt">${esc(rotationSourceText(M))}${M.unscheduled.length ? ` <strong>${M.unscheduled.length} member(s) have no payout month:</strong> ${M.unscheduled.map(m => esc(m.name)).join(', ')}.` : ''}</span>
+                ${M.rotationSource === 'custom' ? '<button class="btn btn-sm" data-action="use-sheet-order"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Use sheet order</button>' : ''}`;
+            $('#timeline').innerHTML = range(M.start, M.end).map(k => {
+                const mo = M.months[k];
+                const r = mo.recipients;
+                const allReleased = r.length && r.every(m => m.received);
+                const anyPending = r.some(m => m.payoutState === 'pending');
+                const status = anyPending ? 'pending' : allReleased ? 'done' : mo.isCurrent ? 'current' : 'upcoming';
+                const statusChip = {
+                    done: { cls: 'good', icon: 'fa-circle-check', label: 'Released' },
+                    pending: PAYOUT.pending,
+                    current: { cls: 'info', icon: 'fa-circle-dot', label: 'In progress' },
+                    upcoming: { cls: 'muted', icon: 'fa-hourglass-half', label: 'Upcoming' }
+                }[status];
+                const rate = pct(mo.collected, mo.expected);
+                const names = r.length
+                    ? r.map(m => `<button class="member-link" data-member="${esc(m.id)}"><span class="avatar gold" aria-hidden="true">${esc(initials(m.name))}</span>${esc(m.name)}</button>`).join('')
+                    : '<span class="muted-text">No recipient scheduled</span>';
+                return `<li class="tl-item ${status}">
+                    <div class="tl-badge" aria-hidden="true"><small>Round</small>${mo.round}</div>
+                    <div class="card tl-card">
+                        <div>
+                            <div class="tl-month">${esc(mo.name)} ${M.year} <span>· payout ${esc(fmtDate(mo.date))}</span></div>
+                            <div class="tl-names">${names}</div>
+                        </div>
+                        <div>
+                            <div class="progress-row sm">
+                                <span>${k <= M.nowIdx ? `<strong>${peso(mo.collected)}</strong> collected` : mo.collected > 0 ? `<strong>${peso(mo.collected)}</strong> paid in advance` : 'Not yet collected'}</span>
+                                <span>${mo.paid.length}/${M.members.length} paid</span>
+                            </div>
+                            <div class="meter" role="progressbar" aria-label="${esc(mo.name)} collection" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100, rate)}"><span style="width:${Math.min(100, rate)}%"></span></div>
+                        </div>
+                        <div class="tl-amount"><strong>${peso(r.length ? r[0].payoutAmount : mo.expected)}</strong>${chip(statusChip)}</div>
+                    </div>
+                </li>`;
+            }).join('');
+        }
+
+        const FILTERS = {
+            all:      { label: 'All',           test: () => true },
+            behind:   { label: 'Behind',        test: m => m.standing === 'behind' },
+            due:      { label: 'Due this month', test: m => m.standing === 'due' },
+            ok:       { label: 'Up to date',    test: m => m.standing === 'current' || m.standing === 'ahead' },
+            received: { label: 'Got payout',    test: m => m.received },
+            waiting:  { label: 'Waiting',       test: m => ['today', 'current', 'upcoming'].includes(m.payoutState) }
+        };
+        const SORTS = {
+            turn: m => m.turn,
+            name: m => m.name.toLowerCase(),
+            payout: m => (m.payoutDate ? m.payoutDate.getTime() : Infinity),
+            paid: m => m.paid,
+            balance: m => m.balance,
+            remaining: m => m.remaining,
+            net: m => m.net,
+            status: m => STANDING[m.standing].rank
+        };
+
+        function renderLedger() {
+            const M = state.model;
+            const v = state.view;
+            $('#ledger-filters').innerHTML = Object.keys(FILTERS).map(key => {
+                const count = M.members.filter(FILTERS[key].test).length;
+                return `<button type="button" data-filter="${key}" aria-pressed="${v.memberFilter === key}">${FILTERS[key].label}<span class="n">${count}</span></button>`;
+            }).join('');
+            const q = v.memberQuery.trim().toLowerCase();
+            const getter = SORTS[v.sort.key] || SORTS.turn;
+            const rows = M.members
+                .filter(FILTERS[v.memberFilter].test)
+                .filter(m => !q || m.name.toLowerCase().includes(q))
+                .sort((a, b) => {
+                    const x = getter(a), y = getter(b);
+                    return (x < y ? -1 : x > y ? 1 : 0) * v.sort.dir || a.turn - b.turn;
+                });
+            const th = (key, label, cls = '', title = '') => {
+                const active = v.sort.key === key;
+                const icon = active ? (v.sort.dir > 0 ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort';
+                return `<th scope="col" class="${cls}"${active ? ` aria-sort="${v.sort.dir > 0 ? 'ascending' : 'descending'}"` : ''}${title ? ` title="${esc(title)}"` : ''}>
+                    <button class="sort-btn" data-sort="${key}">${label}<i class="fa-solid ${icon}" aria-hidden="true"></i></button></th>`;
+            };
+            const head = `<thead><tr>
+                ${th('turn', 'Member', 'sticky-col')}
+                ${th('payout', 'Payout')}
+                ${th('paid', 'Paid to date', 'num')}
+                ${th('balance', 'Balance', 'num', 'Paid minus what is due through this month')}
+                ${th('remaining', 'Left to pay', 'num', 'Contributions still to make for the rest of the cycle')}
+                ${th('net', 'Net position', 'num', 'Paid in minus payout received. Negative = received the pot early and still owes future contributions')}
+                ${th('status', 'Status')}
+            </tr></thead>`;
+            const body = rows.length ? rows.map(m => {
+                const fill = m.dueToDate > 0 ? Math.min(100, Math.round((m.paid / m.dueToDate) * 100)) : (m.paid > 0 ? 100 : 0);
+                return `<tr>
+                    <th scope="row" class="sticky-col">
+                        <button class="member-link" data-member="${esc(m.id)}"><span class="turn">#${m.turn}</span>${esc(m.name)}</button>
+                        <div class="sub">${peso(m.expected)}/month</div>
+                    </th>
+                    <td>${m.payoutDate ? `${esc(fmtDate(m.payoutDate))} · ${peso(m.payoutAmount)}` : '—'}<div class="sub">${chip(PAYOUT[m.payoutState])}</div></td>
+                    <td class="num">${peso(m.paid)}<div class="mini-meter" title="${fill}% of ${esc(peso(m.dueToDate))} due"><span style="width:${fill}%"></span></div></td>
+                    <td class="num${m.balance < 0 ? ' neg' : ''}">${signedPeso(m.balance)}</td>
+                    <td class="num">${peso(m.remaining)}</td>
+                    <td class="num">${signedPeso(m.net)}</td>
+                    <td><span class="chips">${chip(STANDING[m.standing])}${m.atRisk ? chip(AT_RISK) : ''}</span></td>
+                </tr>`;
+            }).join('') : `<tr><td colspan="7" class="empty">No members match this filter.</td></tr>`;
+            const foot = `<tfoot><tr>
+                <th scope="row" class="sticky-col">${rows.length} member${rows.length === 1 ? '' : 's'}</th>
+                <td></td>
+                <td class="num">${peso(sum(rows, m => m.paid))}</td>
+                <td class="num">${signedPeso(sum(rows, m => m.balance))}</td>
+                <td class="num">${peso(sum(rows, m => m.remaining))}</td>
+                <td class="num">${signedPeso(sum(rows, m => m.net))}</td>
+                <td></td></tr></tfoot>`;
+            $('#ledger').innerHTML = `<caption class="sr-only">Member ledger</caption>${head}<tbody>${body}</tbody>${foot}`;
+        }
+
+        /* ----- Charts ----- */
+        function chartTheme() {
+            const cs = getComputedStyle(document.documentElement);
+            const v = (n) => cs.getPropertyValue(n).trim();
+            return {
+                series: v('--series-1'), wash: v('--series-wash'), context: v('--context'),
+                grid: v('--grid'), axis: v('--axis'), muted: v('--muted'), text: v('--text'), text2: v('--text-2'),
+                surface: v('--surface'), tipBg: v('--tooltip-bg'), tipText: v('--tooltip-text'), tipMuted: v('--tooltip-muted')
+            };
+        }
+
+        function baseOptions(t) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: reduceMotion() ? 0 : 400 },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: t.tipBg, titleColor: t.tipText, bodyColor: t.tipText, footerColor: t.tipMuted,
+                        padding: 10, cornerRadius: 8, boxPadding: 4, usePointStyle: true,
+                        titleFont: { weight: '600' }, footerFont: { weight: '400' },
+                        callbacks: {
+                            label: (ctx) => {
+                                const val = ctx.parsed[ctx.chart.options.indexAxis === 'y' ? 'x' : 'y'];
+                                return ` ${val == null ? '—' : peso(val)}  ${ctx.dataset.label}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, border: { color: t.axis }, ticks: { color: t.muted } },
+                    y: {
+                        beginAtZero: true, grid: { color: t.grid }, border: { display: false },
+                        ticks: { color: t.muted, maxTicksLimit: 6, callback: axisTick }
+                    }
+                }
+            };
+        }
+
+        function makeChart(id, config) {
+            if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+            const canvas = document.getElementById(id);
+            if (!canvas) return null;
+            if (typeof Chart === 'undefined') {
+                canvas.parentElement.innerHTML = '<div class="chart-fallback">Charts could not load (offline?). All figures are in the tables.</div>';
+                return null;
+            }
+            charts[id] = new Chart(canvas, config);
+            return charts[id];
+        }
+
+        function renderCharts() {
+            if (!state.model) return;
+            if (state.view.tab === 'overview') renderOverviewCharts();
+            if (state.view.tab === 'members') renderMemberChart();
+        }
+
+        function renderOverviewCharts() {
+            const M = state.model, t = chartTheme();
+            const ks = range(M.start, M.end);
+            const labels = ks.map(k => MON[k]);
+            const collected = ks.map(k => (k > M.nowIdx ? null : M.months[k].collected));
+            const expected = ks.map(k => M.months[k].expected);
+
+            const monthlyOpts = baseOptions(t);
+            monthlyOpts.plugins.tooltip.itemSort = (a, b) => a.datasetIndex - b.datasetIndex;
+            monthlyOpts.plugins.tooltip.callbacks.title = (items) => `${MONTHS[ks[items[0].dataIndex]]} ${M.year}`;
+            monthlyOpts.plugins.tooltip.callbacks.footer = (items) => {
+                const mo = M.months[ks[items[0].dataIndex]];
+                return mo.k > M.nowIdx ? 'Not due yet' : `${pct(mo.collected, mo.expected)}% collected · ${mo.paid.length}/${M.members.length} paid`;
+            };
+            makeChart('chart-monthly', {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { type: 'bar', label: 'Collected', data: collected, backgroundColor: t.series, hoverBackgroundColor: t.series,
+                          borderRadius: 4, borderSkipped: 'start', maxBarThickness: 24, pointStyle: 'rectRounded', order: 2 },
+                        { type: 'line', label: 'Expected pot', data: expected, borderColor: t.context, backgroundColor: t.context,
+                          borderWidth: 2, pointRadius: 0, pointHoverRadius: 0, pointStyle: 'line', tension: 0, order: 1 }
+                    ]
+                },
+                options: monthlyOpts
+            });
+
+            let acc = 0;
+            const cumCollected = ks.map(k => { acc += M.months[k].collected; return k > M.nowIdx ? null : r2(acc); });
+            acc = 0;
+            const cumExpected = ks.map(k => { acc += M.months[k].expected; return r2(acc); });
+            const lastIdx = cumCollected.reduce((last, v, i) => (v == null ? last : i), -1);
+            const cumOpts = baseOptions(t);
+            cumOpts.plugins.tooltip.callbacks.title = (items) => `Through ${MONTHS[ks[items[0].dataIndex]]} ${M.year}`;
+            cumOpts.plugins.tooltip.callbacks.footer = (items) => {
+                const i = items[0].dataIndex;
+                if (cumCollected[i] == null) return '';
+                const gap = r2(cumCollected[i] - cumExpected[i]);
+                return gap >= 0 ? 'On target' : `${peso(-gap)} short of target`;
+            };
+            makeChart('chart-cumulative', {
                 type: 'line',
                 data: {
-                    labels: MONTHS,
-                    datasets: [{
-                        label: 'Monthly Savings (₱ thousands)',
-                        data: monthlyTotals,
-                        backgroundColor: 'rgba(0, 82, 155, 0.1)',
-                        borderColor: 'rgba(0, 82, 155, 1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels,
+                    datasets: [
+                        { label: 'Collected', data: cumCollected, borderColor: t.series, backgroundColor: t.wash, fill: 'origin',
+                          borderWidth: 2, tension: 0.25, pointStyle: 'circle', borderCapStyle: 'round', borderJoinStyle: 'round',
+                          pointRadius: cumCollected.map((_, i) => (i === lastIdx ? 4 : 0)),
+                          pointBackgroundColor: t.series, pointBorderColor: t.surface, pointBorderWidth: 2,
+                          pointHoverRadius: 5, pointHoverBorderColor: t.surface, pointHoverBorderWidth: 2 },
+                        { label: 'Target', data: cumExpected, borderColor: t.context, backgroundColor: t.context, fill: false,
+                          borderWidth: 2, tension: 0, pointStyle: 'line', pointRadius: 0, pointHoverRadius: 0 }
+                    ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return formatCurrencyChart(context.parsed.y);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrencyChart(value);
-                                }
-                            }
-                        }
-                    }
-                }
+                options: cumOpts
             });
         }
-        
-        // Create member contributions chart
-        function createContributionsChart(members) {
-            const ctx = document.getElementById('contributionsChart').getContext('2d');
-            
-            if (contributionsChart) {
-                contributionsChart.destroy();
-            }
-            
-            const memberNames = members.map(member => member.name);
-            const memberTotals = members.map(member => member.total);
-            
-            const backgroundColors = generateColors(members.length);
-            
-            contributionsChart = new Chart(ctx, {
-                type: 'pie',
+
+        function renderMemberChart() {
+            const M = state.model, t = chartTheme();
+            const sorted = M.members.slice().sort((a, b) => b.paid - a.paid || a.turn - b.turn);
+            $('#member-chart-box').style.height = `${Math.max(220, sorted.length * 30 + 50)}px`;
+            const opts = baseOptions(t);
+            opts.indexAxis = 'y';
+            opts.interaction = { mode: 'index', axis: 'y', intersect: false };
+            opts.scales = {
+                x: { beginAtZero: true, suggestedMax: Math.max(1, ...sorted.map(m => m.dueToDate)) * 1.05,
+                     grid: { color: t.grid }, border: { display: false },
+                     ticks: { color: t.muted, maxTicksLimit: 6, callback: axisTick } },
+                y: { grid: { display: false }, border: { color: t.axis },
+                     ticks: { color: t.text2, autoSkip: false, callback: function (val) {
+                         const label = this.getLabelForValue(val);
+                         return label.length > 22 ? label.slice(0, 21) + '…' : label;
+                     } } }
+            };
+            opts.plugins.tooltip.callbacks.footer = (items) => {
+                const m = sorted[items[0].dataIndex];
+                return `Due to date ${peso(m.dueToDate)} · ${STANDING[m.standing].label}`;
+            };
+            const dueTicks = {
+                id: 'dueTicks',
+                afterDatasetsDraw(chart) {
+                    const { ctx, scales: { x, y } } = chart;
+                    ctx.save();
+                    ctx.strokeStyle = t.text2;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    sorted.forEach((m, i) => {
+                        if (!(m.dueToDate > 0)) return;
+                        const xp = x.getPixelForValue(m.dueToDate);
+                        const yp = y.getPixelForValue(i);
+                        ctx.beginPath();
+                        ctx.moveTo(xp, yp - 9);
+                        ctx.lineTo(xp, yp + 9);
+                        ctx.stroke();
+                    });
+                    ctx.restore();
+                }
+            };
+            makeChart('chart-members', {
+                type: 'bar',
                 data: {
-                    labels: memberNames,
-                    datasets: [{
-                        data: memberTotals,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 2,
-                        borderColor: 'white'
-                    }]
+                    labels: sorted.map(m => m.name),
+                    datasets: [{ label: 'Paid to date', data: sorted.map(m => m.paid), backgroundColor: t.series, hoverBackgroundColor: t.series,
+                                 borderRadius: 4, borderSkipped: 'start', maxBarThickness: 16, pointStyle: 'rectRounded' }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${context.label}: ${formatCurrencyChart(value)} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
+                options: opts,
+                plugins: [dueTicks]
+            });
+        }
+
+        /* ----- Member detail ----- */
+        function openMember(id) {
+            const M = state.model;
+            const m = M && M.byId.get(id);
+            if (!m) return;
+            $('#member-title').textContent = m.name;
+            const strip = m.cells.map(c => {
+                const meta = CELL[c.s];
+                const isPayout = m.payoutMonth === c.k;
+                return `<div class="ms s-${c.s}${isPayout ? ' is-payout' : ''}" title="${esc(`${MONTHS[c.k]}: ${meta.label}${isPayout ? ' · payout month' : ''}`)}">
+                    <div class="m">${isPayout ? '<i class="fa-solid fa-coins payout-ic" aria-hidden="true"></i>' : ''}${MON[c.k]}</div>
+                    <div class="a">${c.v ? num(c.v) : '–'}</div>
+                    <div class="l">${meta.icon ? `<i class="fa-solid ${meta.icon} ic-${c.s}" aria-hidden="true"></i>` : ''}${esc(meta.label)}</div>
+                </div>`;
+            }).join('');
+            $('#member-body').innerHTML = `
+                <div class="member-hero">
+                    <span class="avatar lg" aria-hidden="true">${esc(initials(m.name))}</span>
+                    <div class="mh-main">
+                        <div class="mh-meta">Turn #${m.turn} of ${M.members.length} · ${peso(m.expected)} per month</div>
+                        <div class="chips" style="margin-top:4px">${chip(STANDING[m.standing])}${m.atRisk ? chip(AT_RISK) : ''}</div>
+                    </div>
+                </div>
+                <div class="payout-box">
+                    <i class="fa-solid fa-coins" aria-hidden="true"></i>
+                    <div class="pb-text">${m.payoutDate
+                        ? `Payout <strong>${peso(m.payoutAmount)}</strong> on <strong>${esc(fmtDateLong(m.payoutDate))}</strong> · ${esc(payoutWhen(m))}`
+                        : 'No payout month scheduled yet.'}</div>
+                    ${chip(PAYOUT[m.payoutState])}
+                </div>
+                <div class="stat-grid">
+                    <div class="stat"><div class="l">Paid to date</div><div class="v">${peso(m.paid)}</div></div>
+                    <div class="stat"><div class="l">Due to date</div><div class="v">${peso(m.dueToDate)}</div></div>
+                    <div class="stat"><div class="l">Balance</div><div class="v${m.balance < 0 ? ' neg' : ''}">${signedPeso(m.balance)}</div></div>
+                    <div class="stat"><div class="l">Overdue</div><div class="v${m.overdue > 0 ? ' neg' : ''}">${peso(m.overdue)}</div></div>
+                    <div class="stat"><div class="l">Left to pay (cycle)</div><div class="v">${peso(m.remaining)}</div></div>
+                    <div class="stat"><div class="l">Net position</div><div class="v">${signedPeso(m.net)}</div></div>
+                </div>
+                <h3 class="section-title" style="margin-top:0">Monthly contributions</h3>
+                <div class="month-strip">${strip}</div>
+                <p class="hint" style="margin-top:12px">Net position = total paid in minus payout received. A negative number means the member already received the pot and still owes the remaining contributions.</p>`;
+            openDialog('#member-dialog');
+        }
+
+        function openDialog(sel) {
+            const dlg = $(sel);
+            if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
+            else dlg.setAttribute('open', '');
+        }
+        function closeDialog(dlg) {
+            if (typeof dlg.close === 'function') dlg.close();
+            else dlg.removeAttribute('open');
+        }
+
+        /* ----- Settings ----- */
+        function sequentialPreview(count, start) {
+            const L = Math.max(1, Math.min(count, 12 - start));
+            return range(0, count - 1).map(i => start + Math.floor((i * L) / count));
+        }
+
+        function openSettings(section) {
+            const M = state.model;
+            if (!M) return;
+            const s = state.settings;
+            settingsDraft = { order: M.members.map(m => m.id), touched: M.rotationSource === 'custom' };
+            $('#set-contribution').value = s.contribution || '';
+            $('#set-contribution').placeholder = `Auto: ${M.autoContribution ? num(M.autoContribution) : '—'}`;
+            $('#hint-contribution').textContent = M.autoContribution
+                ? `Leave blank to use ${peso(M.autoContribution)}, the most common monthly amount in the sheet.`
+                : 'Set the fixed amount each member pays per month.';
+            $('#set-start').innerHTML = `<option value="">Auto (${MONTHS[M.autoStart]})</option>` +
+                MONTHS.map((n, k) => `<option value="${k}">${n}</option>`).join('');
+            $('#set-start').value = Number.isInteger(s.startMonth) ? String(s.startMonth) : '';
+            $('#set-day').value = s.payoutDay || '';
+            $('#set-day').placeholder = String(CONFIG.defaultPayoutDay);
+            $('#set-year').value = s.cycleYear || '';
+            $('#set-year').placeholder = String(CONFIG.cycleYear);
+            $('#detected-columns').innerHTML = state.source === 'sample'
+                ? '<strong>Detected columns:</strong> none yet (showing sample data).'
+                : `<strong>Detected columns:</strong> ${state.data.detected.map(esc).join(', ')}.`;
+            renderOrderList();
+            openDialog('#settings-dialog');
+            if (section === 'rotation') $('#rotation-section').scrollIntoView({ block: 'start' });
+        }
+
+        function renderOrderList() {
+            const M = state.model;
+            const startVal = $('#set-start').value;
+            const start = startVal === '' ? M.autoStart : +startVal;
+            const preview = sequentialPreview(settingsDraft.order.length, start);
+            const useModelMonths = !settingsDraft.touched && M.rotationSource === 'sheet-month';
+            $('#order-source').textContent = settingsDraft.touched ? '(custom)' : '';
+            $('#order-list').innerHTML = settingsDraft.order.map((id, i) => {
+                const m = M.byId.get(id);
+                const k = useModelMonths ? (m && m.payoutMonth) : preview[i];
+                return `<li>
+                    <span class="pos">${i + 1}</span>
+                    <span class="nm">${esc(m ? m.name : id)}</span>
+                    <span class="mo">${Number.isInteger(k) ? MON[k] : '—'}</span>
+                    <button type="button" class="btn btn-sm icon-btn" data-move="-1" data-idx="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(m ? m.name : id)} earlier"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button type="button" class="btn btn-sm icon-btn" data-move="1" data-idx="${i}" ${i === settingsDraft.order.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(m ? m.name : id)} later"><i class="fa-solid fa-arrow-down"></i></button>
+                </li>`;
+            }).join('');
+        }
+
+        function saveSettingsFromForm() {
+            const numOrNull = (v) => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? r2(n) : null; };
+            const intIn = (v, lo, hi) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= lo && n <= hi ? n : null; };
+            const startVal = $('#set-start').value;
+            state.settings = {
+                contribution: numOrNull($('#set-contribution').value),
+                startMonth: startVal === '' ? null : intIn(startVal, 0, 11),
+                payoutDay: intIn($('#set-day').value, 1, 31),
+                cycleYear: intIn($('#set-year').value, 2000, 2100),
+                order: settingsDraft.touched ? settingsDraft.order.slice() : null
+            };
+            saveSettings();
+            state.view.round = null;
+            closeDialog($('#settings-dialog'));
+            renderAll();
+            toast('Settings saved');
+        }
+
+        /* ----- Exports ----- */
+        function csvCell(value) {
+            let s = value == null ? '' : String(value);
+            if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;   // prevent spreadsheet formula injection
+            return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        }
+        function downloadCsv(filename, rows) {
+            const csv = '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+            const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+            toast(`Downloaded ${filename}`);
+        }
+        const isoDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const stamp = () => isoDate(new Date());
+
+        function exportLedger() {
+            const M = state.model;
+            const rows = [['Turn', 'Member', 'Monthly contribution', 'Payout date', 'Payout amount', 'Payout status',
+                           'Paid to date', 'Due to date', 'Balance', 'Overdue', 'Left to pay', 'Net position', 'Status']];
+            M.members.forEach(m => rows.push([
+                m.turn, m.name, m.expected,
+                m.payoutDate ? isoDate(m.payoutDate) : '', m.payoutAmount, PAYOUT[m.payoutState].label,
+                m.paid, m.dueToDate, m.balance, m.overdue, m.remaining, m.net,
+                STANDING[m.standing].label + (m.atRisk ? ' (received payout)' : '')
+            ]));
+            downloadCsv(`rsa-ledger-${stamp()}.csv`, rows);
+        }
+        function exportMatrix() {
+            const M = state.model;
+            const rows = [['Turn', 'Member', 'Payout month'].concat(MONTHS, ['Total paid', 'Balance'])];
+            M.members.forEach(m => rows.push([m.turn, m.name, Number.isInteger(m.payoutMonth) ? MONTHS[m.payoutMonth] : '']
+                .concat(m.months, [m.paid, m.balance])));
+            rows.push(['', 'Collected', ''].concat(M.months.map(mo => mo.collected), [M.kpi.collected, '']));
+            rows.push(['', 'Expected pot', ''].concat(M.months.map(mo => mo.expected), ['', '']));
+            downloadCsv(`rsa-contributions-${M.year}-${stamp()}.csv`, rows);
+        }
+
+        /* =====================================================================
+           Tabs, theme, auth
+           ===================================================================== */
+        function showTab(id, opts) {
+            const o = opts || {};
+            if (!TABS.includes(id)) id = 'overview';
+            state.view.tab = id;
+            $$('.tab').forEach(t => {
+                const on = t.dataset.tab === id;
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+                t.tabIndex = on ? 0 : -1;
+                if (on && o.focus) t.focus();
+            });
+            $$('.tab-panel').forEach(p => { p.hidden = p.id !== `panel-${id}`; });
+            if (id === 'sheet') {
+                const frame = $('#sheet-frame');
+                if (!frame.getAttribute('src')) frame.setAttribute('src', CONFIG.sheetEmbedUrl);
+            }
+            if (o.updateHash !== false && location.hash !== `#${id}`) {
+                try { history.replaceState(null, '', `#${id}`); } catch (e) { /* ignore */ }
+            }
+            renderCharts();
+        }
+
+        function effectiveTheme() {
+            const set = document.documentElement.getAttribute('data-theme');
+            if (set) return set;
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        function syncThemeIcon() {
+            const dark = effectiveTheme() === 'dark';
+            $('#theme-btn').innerHTML = `<i class="fa-solid ${dark ? 'fa-sun' : 'fa-moon'}" aria-hidden="true"></i>`;
+            $('#theme-btn').title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+        function toggleTheme() {
+            const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            local.set(KEYS.theme, next);
+            syncThemeIcon();
+            renderCharts();
+        }
+
+        function isAuthed() { return session.get(KEYS.auth) === '1'; }
+
+        function enterApp() {
+            $('#login-page').hidden = true;
+            $('#app').hidden = false;
+            syncThemeIcon();
+            showTab((location.hash || '').slice(1) || 'overview', { updateHash: false });
+            if (!state.data) loadData(); else renderAll();
+            startTimer();
+        }
+
+        function showLogin() {
+            $('#app').hidden = true;
+            $('#login-page').hidden = false;
+            $('#password').value = '';
+            setTimeout(() => $('#username').focus(), 0);
+        }
+
+        function logout() {
+            session.remove(KEYS.auth);
+            stopTimer();
+            Object.keys(charts).forEach(id => { charts[id].destroy(); delete charts[id]; });
+            $$('dialog').forEach(d => { if (d.open) closeDialog(d); });
+            showLogin();
+        }
+
+        /* =====================================================================
+           Event wiring
+           ===================================================================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            $('#open-sheet-link').href = CONFIG.sheetOpenUrl;
+            $('#footer-sheet-link').href = CONFIG.sheetOpenUrl;
+
+            // Login
+            $('#login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const user = $('#username').value.trim();
+                const pass = $('#password').value;
+                if (user === CONFIG.username && pass === CONFIG.password) {
+                    session.set(KEYS.auth, '1');
+                    $('#login-error').hidden = true;
+                    enterApp();
+                } else {
+                    $('#login-error').hidden = false;
+                    const card = $('#login-card');
+                    card.classList.remove('shake');
+                    void card.offsetWidth;
+                    card.classList.add('shake');
+                    $('#password').value = '';
+                    $('#password').focus();
                 }
             });
-        }
-        
-        // Create savings table
-        function createSavingsTable(members, monthlyTotals) {
-            const table = document.getElementById('savings-table');
-            
-            let html = `
-                <thead>
-                    <tr>
-                        <th>Name</th>
-            `;
-            
-            MONTHS.forEach(month => {
-                html += `<th>${month}</th>`;
+            $('#toggle-password').addEventListener('click', (e) => {
+                const input = $('#password');
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                e.currentTarget.setAttribute('aria-pressed', String(show));
+                e.currentTarget.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                e.currentTarget.innerHTML = `<i class="fa-solid ${show ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
             });
-            
-            html += `
-                        <th>Total Savings</th>
-                    </tr>
-                </thead>
-                <tbody>
-            `;
-            
-            members.forEach(member => {
-                html += `<tr>`;
-                html += `<td class="member-name">${member.name}</td>`;
-                
-                member.months.forEach(amount => {
-                    html += `<td class="amount-cell">${formatNumberThousands(amount)}</td>`;
-                });
-                
-                html += `<td class="amount-cell total-cell">${formatNumberThousands(member.total)}</td>`;
-                html += `</tr>`;
+
+            // Tabs (click + arrow keys)
+            $$('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+            $('.tabs').addEventListener('keydown', (e) => {
+                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                const i = TABS.indexOf(state.view.tab);
+                const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+                showTab(next, { focus: true });
+                e.preventDefault();
             });
-            
-            html += `<tr class="total-row">`;
-            html += `<td><strong>Monthly Totals</strong></td>`;
-            
-            monthlyTotals.forEach(total => {
-                html += `<td class="amount-cell"><strong>${formatNumberThousands(total)}</strong></td>`;
+            window.addEventListener('hashchange', () => {
+                const id = location.hash.slice(1);
+                if (TABS.includes(id) && id !== state.view.tab && !$('#app').hidden) showTab(id, { updateHash: false });
             });
-            
-            const grandTotal = monthlyTotals.reduce((sum, total) => sum + total, 0);
-            html += `<td class="amount-cell total-cell"><strong>${formatNumberThousands(grandTotal)}</strong></td>`;
-            html += `</tr>`;
-            
-            html += `</tbody>`;
-            
-            table.innerHTML = html;
-        }
-        
-        // Generate colors for charts
-        function generateColors(count) {
-            const colors = [];
-            const baseHue = 210;
-            
-            for (let i = 0; i < count; i++) {
-                const hue = (baseHue + (i * 360 / count)) % 360;
-                colors.push(`hsl(${hue}, 70%, 60%)`);
+
+            // Global click delegation
+            document.addEventListener('click', (e) => {
+                const memberEl = e.target.closest('[data-member]');
+                if (memberEl) { openMember(memberEl.getAttribute('data-member')); return; }
+                const gotoEl = e.target.closest('[data-goto]');
+                if (gotoEl) { showTab(gotoEl.getAttribute('data-goto')); return; }
+                const filterEl = e.target.closest('[data-filter]');
+                if (filterEl) { state.view.memberFilter = filterEl.getAttribute('data-filter'); renderLedger(); return; }
+                const sortEl = e.target.closest('[data-sort]');
+                if (sortEl) {
+                    const key = sortEl.getAttribute('data-sort');
+                    const s = state.view.sort;
+                    if (s.key === key) s.dir = -s.dir; else { s.key = key; s.dir = 1; }
+                    renderLedger();
+                    return;
+                }
+                const moveEl = e.target.closest('[data-move]');
+                if (moveEl && settingsDraft) {
+                    const i = +moveEl.getAttribute('data-idx');
+                    const j = i + (+moveEl.getAttribute('data-move'));
+                    const order = settingsDraft.order;
+                    if (j >= 0 && j < order.length) {
+                        [order[i], order[j]] = [order[j], order[i]];
+                        settingsDraft.touched = true;
+                        renderOrderList();
+                        const btn = $(`#order-list [data-idx="${j}"][data-move="${moveEl.getAttribute('data-move')}"]`);
+                        if (btn && !btn.disabled) btn.focus();
+                    }
+                    return;
+                }
+                const actionEl = e.target.closest('[data-action]');
+                if (!actionEl) return;
+                const M = state.model;
+                switch (actionEl.getAttribute('data-action')) {
+                    case 'refresh': loadData({ manual: true }); break;
+                    case 'settings': openSettings(); break;
+                    case 'edit-rotation': openSettings('rotation'); break;
+                    case 'theme': toggleTheme(); break;
+                    case 'logout': logout(); break;
+                    case 'print': window.print(); break;
+                    case 'export-ledger': exportLedger(); break;
+                    case 'export-matrix': exportMatrix(); break;
+                    case 'round-prev': if (M) { state.view.round = Math.max(M.start, state.view.round - 1); renderRound(); } break;
+                    case 'round-next': if (M) { state.view.round = Math.min(M.end, state.view.round + 1); renderRound(); } break;
+                    case 'show-behind': state.view.memberFilter = 'behind'; showTab('members'); renderLedger(); break;
+                    case 'use-sheet-order':
+                        state.settings.order = null;
+                        saveSettings();
+                        renderAll();
+                        toast('Rotation reset to the sheet order');
+                        break;
+                    case 'close-dialog': closeDialog(actionEl.closest('dialog')); break;
+                    case 'draw-lots':
+                        if (settingsDraft) {
+                            const order = settingsDraft.order;
+                            for (let i = order.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [order[i], order[j]] = [order[j], order[i]];
+                            }
+                            settingsDraft.touched = true;
+                            renderOrderList();
+                            toast('Lots drawn. Review the order, then save.');
+                        }
+                        break;
+                    case 'reset-order-draft':
+                        if (settingsDraft && state.data) {
+                            const base = computeModel(state.data.members, Object.assign({}, state.settings, { order: null }), new Date());
+                            settingsDraft.order = base.members.map(m => m.id);
+                            settingsDraft.touched = false;
+                            renderOrderList();
+                        }
+                        break;
+                    case 'reset-settings':
+                        if (window.confirm('Reset all cycle settings and the custom rotation for this browser?')) {
+                            state.settings = Object.assign({}, DEFAULT_SETTINGS);
+                            local.remove(KEYS.settings);
+                            state.view.round = null;
+                            closeDialog($('#settings-dialog'));
+                            renderAll();
+                            toast('Settings reset');
+                        }
+                        break;
+                }
+            });
+
+            // Close dialogs by clicking the backdrop
+            $$('dialog').forEach(d => d.addEventListener('click', (e) => { if (e.target === d) closeDialog(d); }));
+
+            $('#settings-form').addEventListener('submit', (e) => { e.preventDefault(); saveSettingsFromForm(); });
+            $('#set-start').addEventListener('change', () => { if (settingsDraft) renderOrderList(); });
+
+            $('#matrix-search').addEventListener('input', (e) => { state.view.matrixQuery = e.target.value; renderMatrix(); });
+            $('#ledger-search').addEventListener('input', (e) => { state.view.memberQuery = e.target.value; renderLedger(); });
+
+            // Refresh when returning to a stale tab
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden || !isAuthed() || $('#app').hidden) return;
+                const stale = !state.lastSynced || Date.now() - state.lastSynced.getTime() > CONFIG.refreshSeconds * 1000;
+                if (stale) loadData();
+            });
+
+            // Follow OS theme changes when the user hasn't picked one
+            if (window.matchMedia) {
+                const mq = window.matchMedia('(prefers-color-scheme: dark)');
+                const onChange = () => { if (!document.documentElement.getAttribute('data-theme')) { syncThemeIcon(); renderCharts(); } };
+                if (mq.addEventListener) mq.addEventListener('change', onChange);
             }
-            
-            return colors;
-        }
-        
-        // Show iframe view
-        function showIframeView() {
-            setActiveButton('show-iframe-btn');
-            document.getElementById('charts-view').style.display = 'none';
-            document.getElementById('iframe-view').style.display = 'block';
-        }
-        
-        // Show charts view
-        function showChartsView() {
-            setActiveButton('show-charts-btn');
-            document.getElementById('iframe-view').style.display = 'none';
-            document.getElementById('charts-view').style.display = 'block';
-        }
-        
-        // Set active button
-        function setActiveButton(activeId) {
-            document.querySelectorAll('.data-source-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(activeId).classList.add('active');
-        }
+
+            if (isAuthed()) enterApp(); else showLogin();
+        });
+    })();
     </script>
 </body>
 </html>
-
-
-
